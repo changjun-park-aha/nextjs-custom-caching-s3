@@ -23,6 +23,8 @@ RUN pnpm install --frozen-lockfile
 
 # Build the application
 WORKDIR /app/apps/web
+ENV TURBO_TELEMETRY_DISABLE=1
+ENV DO_NOT_TRACK=1
 RUN pnpm build
 
 # Production stage
@@ -32,7 +34,7 @@ WORKDIR /app
 
 # Create a non-root user
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001
+  adduser -S nextjs -u 1001
 
 # Copy built application
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
