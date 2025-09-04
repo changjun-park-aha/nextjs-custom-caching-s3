@@ -37,7 +37,7 @@ sudo docker run -d \
 
 # Clean up old images
 echo "Cleaning up old images..."
-docker image prune -af
+sudo docker image prune -af
 
 # Health check
 echo "Waiting for application to start..."
@@ -48,7 +48,7 @@ if curl -f http://localhost:$PORT/api/health 2>/dev/null; then
 else
   echo "Warning: Health check failed, but container is running"
   echo "Container logs:"
-  docker logs --tail 50 $CONTAINER_NAME
+  sudo docker logs --tail 50 $CONTAINER_NAME
 fi
 
 echo "Deployment complete!"
