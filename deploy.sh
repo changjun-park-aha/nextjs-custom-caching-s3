@@ -15,20 +15,20 @@ echo "Image: $IMAGE_URL"
 
 # Log in to GitHub Container Registry
 echo "Logging in to GitHub Container Registry..."
-echo $GITHUB_TOKEN | docker login ghcr.io -u $GITHUB_USERNAME --password-stdin
+echo $GITHUB_TOKEN | sudo docker login ghcr.io -u $GITHUB_USERNAME --password-stdin
 
 # Pull the latest image
 echo "Pulling latest image..."
-docker pull $IMAGE_URL
+sudo docker pull $IMAGE_URL
 
 # Stop and remove existing container if it exists
 echo "Stopping existing container..."
-docker stop $CONTAINER_NAME 2>/dev/null || true
-docker rm $CONTAINER_NAME 2>/dev/null || true
+sudo docker stop $CONTAINER_NAME 2>/dev/null || true
+sudo docker rm $CONTAINER_NAME 2>/dev/null || true
 
 # Run the new container
 echo "Starting new container..."
-docker run -d \
+sudo docker run -d \
   --name $CONTAINER_NAME \
   --restart unless-stopped \
   -p $PORT:3000 \
