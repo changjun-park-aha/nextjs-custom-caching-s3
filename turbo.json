@@ -4,18 +4,28 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env*",
+        "!README.md",
+        "!**/*.md",
+        "!**/*.test.*",
+        "!**/*.spec.*"
+      ],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": ["NODE_ENV", "NEXT_PUBLIC_*"]
     },
     "lint": {
-      "dependsOn": ["^lint"]
-    },
-    "check-types": {
-      "dependsOn": ["^check-types"]
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".eslintrc*", "eslint.config.*"],
+      "outputs": []
     },
     "dev": {
       "cache": false,
       "persistent": true
     }
+  },
+  "remoteCache": {
+    "signature": true
   }
 }

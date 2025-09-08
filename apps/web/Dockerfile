@@ -1,55 +1,47 @@
-# Build stage
-FROM node:20-alpine AS builder
-
-# Install pnpm
+# Base stage with dependencies
+FROM node:20-alpine AS base
 RUN corepack enable && corepack prepare pnpm@latest --activate
-
-# Set working directory
 WORKDIR /app
 
-# Copy workspace files
-COPY pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY package.json ./
-
-# Copy packages
-COPY packages ./packages
-
-# Copy app-specific files
+# Dependencies stage - cache pnpm install
+FROM base AS deps
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/web/package.json ./apps/web/
-COPY apps/web ./apps/web
+COPY packages/*/package.json ./packages/
+RUN pnpm install --frozen-lockfile --prefer-offline
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Source stage - copy source files
+FROM base AS source
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
+COPY . .
 
-# Build the application
-WORKDIR /app/apps/web
+# Build stage - optimized for Turborepo
+FROM source AS builder
 ENV TURBO_TELEMETRY_DISABLE=1
 ENV DO_NOT_TRACK=1
-RUN pnpm build
+ENV NODE_ENV=production
 
-# Production stage
+# Use Turborepo to build only what's needed
+RUN pnpm turbo build --filter=web
+
+# Runtime stage
 FROM node:20-alpine AS runner
-
 WORKDIR /app
 
-# Create a non-root user
 RUN addgroup -g 1001 -S nodejs && \
   adduser -S nextjs -u 1001
 
-# Copy built application
+# Copy only necessary files for production
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 
-# Switch to non-root user
 USER nextjs
-
-# Expose port
 EXPOSE 3000
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV NODE_ENV=production
 
-# Start the application
 CMD ["node", "apps/web/server.js"]

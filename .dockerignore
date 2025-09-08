@@ -1,0 +1,81 @@
+# Git files
+.git
+.github
+.gitignore
+
+# Documentation
+README.md
+docs
+**/*.md
+LICENSE
+
+# Build artifacts and caches
+.turbo
+.next/cache
+node_modules/.cache
+coverage
+dist
+build
+
+# Test files
+**/*.test.*
+**/*.spec.*
+__tests__
+test
+tests
+
+# Environment files
+.env.local
+.env.*.local
+.env.development
+.env.test
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories (handled by multi-stage build)
+# node_modules (commented out as we need it for the build)
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Storybook build outputs
+.out
+.storybook-out
