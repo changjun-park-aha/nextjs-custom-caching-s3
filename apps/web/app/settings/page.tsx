@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "../../lib/auth-context";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@workspace/ui/components/button";
@@ -18,7 +18,7 @@ import { Alert, AlertDescription } from "@workspace/ui/components/alert";
 import { User, Lock, Shield } from "lucide-react";
 
 export default function SettingsPage() {
-  const { data: session, status, update } = useSession();
+  const { session, status, refresh } = useAuth();
   const router = useRouter();
   const [nickname, setNickname] = useState(session?.user?.nickname || "");
   const [error, setError] = useState("");
@@ -70,7 +70,7 @@ export default function SettingsPage() {
       if (response.ok) {
         setSuccess("Nickname updated successfully");
         // Update the session
-        await update();
+        await refresh();
       } else {
         const data = await response.json();
         setError(data.error || "Failed to update nickname");

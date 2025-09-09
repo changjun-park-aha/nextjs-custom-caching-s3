@@ -1,22 +1,22 @@
-import { Hono } from 'hono'
-import { handle } from 'hono/vercel'
-import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 import { db } from '../../../../lib/db'
 import { comments, users } from '../../../../schemas'
 import { eq, and, isNull } from 'drizzle-orm'
 import { z } from 'zod'
-import { authOptions } from '../../../../lib/auth'
+import { Auth } from '../../../../lib/auth'
 
-const app = new Hono().basePath('/api/comments')
-
+// Validation schema for updates
 const updateCommentSchema = z.object({
   content: z.string().min(1),
 })
 
-// GET /api/comments/:id - Get single comment
-app.get('/:id', async (c) => {
+// GET /api/comments/[id] - Get single comment
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const id = c.req.param('id')
+    const { id } = await params
     
     const comment = await db
       .select({
@@ -40,27 +40,28 @@ app.get('/:id', async (c) => {
       .limit(1)
 
     if (comment.length === 0) {
-      return c.json({ error: 'Comment not found' }, 404)
+      return NextResponse.json({ error: 'Comment not found' }, { status: 404 })
     }
 
-    return c.json(comment[0])
+    return NextResponse.json(comment[0])
   } catch (error) {
     console.error('Error fetching comment:', error)
-    return c.json({ error: 'Failed to fetch comment' }, 500)
+    return NextResponse.json({ error: 'Failed to fetch comment' }, { status: 500 })
   }
-})
+}
 
-// PUT /api/comments/:id - Update comment
-app.put('/:id', async (c) => {
+// PUT /api/comments/[id] - Update comment (authenticated, author only)
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const session = await getServerSession(authOptions)
+    const { session, response } = await Auth.requireAuth(request)
     
-    if (!session?.user?.id) {
-      return c.json({ error: 'Unauthorized' }, 401)
-    }
+    if (response) return response
 
-    const id = c.req.param('id')
-    const body = await c.req.json()
+    const { id } = await params
+    const body = await request.json()
     const validatedData = updateCommentSchema.parse(body)
 
     // Check if comment exists and user is the author
@@ -71,11 +72,11 @@ app.put('/:id', async (c) => {
       .limit(1)
 
     if (existingComment.length === 0) {
-      return c.json({ error: 'Comment not found' }, 404)
+      return NextResponse.json({ error: 'Comment not found' }, { status: 404 })
     }
 
     if (existingComment[0]!.authorId !== session.user.id && !session.user.isAdmin) {
-      return c.json({ error: 'Forbidden' }, 403)
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const updatedComment = await db
@@ -87,28 +88,32 @@ app.put('/:id', async (c) => {
       .where(eq(comments.id, id))
       .returning()
 
-    return c.json(updatedComment[0])
+    return NextResponse.json(updatedComment[0])
   } catch (error) {
     console.error('Error updating comment:', error)
     
     if (error instanceof z.ZodError) {
-      return c.json({ error: error.errors[0]?.message || 'Validation error' }, 400)
+      return NextResponse.json(
+        { error: error.errors[0]?.message || 'Validation error' }, 
+        { status: 400 }
+      )
     }
 
-    return c.json({ error: 'Failed to update comment' }, 500)
+    return NextResponse.json({ error: 'Failed to update comment' }, { status: 500 })
   }
-})
+}
 
-// DELETE /api/comments/:id - Soft delete comment
-app.delete('/:id', async (c) => {
+// DELETE /api/comments/[id] - Soft delete comment (authenticated, author or admin)
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const session = await getServerSession(authOptions)
+    const { session, response } = await Auth.requireAuth(request)
     
-    if (!session?.user?.id) {
-      return c.json({ error: 'Unauthorized' }, 401)
-    }
+    if (response) return response
 
-    const id = c.req.param('id')
+    const { id } = await params
 
     // Check if comment exists and user has permission
     const existingComment = await db
@@ -118,11 +123,11 @@ app.delete('/:id', async (c) => {
       .limit(1)
 
     if (existingComment.length === 0) {
-      return c.json({ error: 'Comment not found' }, 404)
+      return NextResponse.json({ error: 'Comment not found' }, { status: 404 })
     }
 
     if (existingComment[0]!.authorId !== session.user.id && !session.user.isAdmin) {
-      return c.json({ error: 'Forbidden' }, 403)
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     await db
@@ -132,13 +137,9 @@ app.delete('/:id', async (c) => {
       })
       .where(eq(comments.id, id))
 
-    return c.json({ message: 'Comment deleted successfully' })
+    return NextResponse.json({ message: 'Comment deleted successfully' })
   } catch (error) {
     console.error('Error deleting comment:', error)
-    return c.json({ error: 'Failed to delete comment' }, 500)
+    return NextResponse.json({ error: 'Failed to delete comment' }, { status: 500 })
   }
-})
-
-export const GET = handle(app)
-export const PUT = handle(app)
-export const DELETE = handle(app)
+}

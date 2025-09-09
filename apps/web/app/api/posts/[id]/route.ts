@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { db } from '../../../../lib/db'
 import { posts, users } from '../../../../schemas'
 import { eq, and, isNull } from 'drizzle-orm'
 import { z } from 'zod'
-import { authOptions } from '../../../../lib/auth'
+import { Auth } from '../../../../lib/auth'
 
 // Validation schema for updates
 const updatePostSchema = z.object({
@@ -56,11 +55,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const { session, response } = await Auth.requireAuth(request)
     
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    if (response) return response
 
     const { id } = await params
     const body = await request.json()
@@ -96,7 +93,7 @@ export async function PUT(
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: error.errors[0]?.message || 'Validation error' }, 
+        { error: error.errors[0]?.message || 'Validation error' },
         { status: 400 }
       )
     }
@@ -111,11 +108,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const { session, response } = await Auth.requireAuth(request)
     
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    if (response) return response
 
     const { id } = await params
 

@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import bcrypt from 'bcryptjs'
 import { db } from '../../../../lib/db'
 import { users } from '../../../../schemas/users'
 import { eq, and, isNull } from 'drizzle-orm'
 import { z } from 'zod'
-import { authOptions } from '../../../../lib/auth'
+import { Auth } from '../../../../lib/auth'
+import bcrypt from 'bcryptjs'
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
@@ -14,49 +13,38 @@ const changePasswordSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const { session, response } = await Auth.requireAuth(request)
     
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
+    if (response) return response
 
     const body = await request.json()
     const validatedData = changePasswordSchema.parse(body)
-    const { currentPassword, newPassword } = validatedData
 
-    // Get current user
-    const currentUser = await db
+    // Get current user from database
+    const user = await db
       .select()
       .from(users)
       .where(and(eq(users.id, session.user.id), isNull(users.deletedAt)))
       .limit(1)
 
-    if (currentUser.length === 0) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      )
+    if (user.length === 0) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const user = currentUser[0]!
-
     // Verify current password
-    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password)
-    
+    const isCurrentPasswordValid = await bcrypt.compare(
+      validatedData.currentPassword,
+      user[0]!.password
+    )
+
     if (!isCurrentPasswordValid) {
-      return NextResponse.json(
-        { error: 'Current password is incorrect' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Current password is incorrect' }, { status: 400 })
     }
 
     // Hash new password
-    const hashedNewPassword = await bcrypt.hash(newPassword, 10)
+    const hashedNewPassword = await bcrypt.hash(validatedData.newPassword, 12)
 
-    // Update password
+    // Update password in database
     await db
       .update(users)
       .set({
@@ -65,23 +53,17 @@ export async function POST(request: NextRequest) {
       })
       .where(eq(users.id, session.user.id))
 
-    return NextResponse.json(
-      { message: 'Password updated successfully' },
-      { status: 200 }
-    )
+    return NextResponse.json({ message: 'Password updated successfully' })
   } catch (error) {
-    console.error('Change password error:', error)
+    console.error('Error changing password:', error)
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: error.errors[0]?.message || 'Validation error' },
+        { error: error.errors[0]?.message || 'Validation error' }, 
         { status: 400 }
       )
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to change password' }, { status: 500 })
   }
 }

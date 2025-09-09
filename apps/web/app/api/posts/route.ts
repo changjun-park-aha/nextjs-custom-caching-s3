@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { db } from '../../../lib/db'
 import { posts, users } from '../../../schemas'
 import { eq, and, isNull, desc } from 'drizzle-orm'
 import { z } from 'zod'
-import { authOptions } from '../../../lib/auth'
+import { Auth } from '../../../lib/auth'
 
 // Validation schemas
 const createPostSchema = z.object({
@@ -44,11 +43,9 @@ export async function GET() {
 // POST /api/posts - Create new post (authenticated)
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const { session, response } = await Auth.requireAuth(request)
     
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    if (response) return response
 
     const body = await request.json()
     const validatedData = createPostSchema.parse(body)
@@ -68,7 +65,7 @@ export async function POST(request: NextRequest) {
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: error.errors[0]?.message || 'Validation error' }, 
+        { error: error.errors[0]?.message || 'Validation error' },
         { status: 400 }
       )
     }

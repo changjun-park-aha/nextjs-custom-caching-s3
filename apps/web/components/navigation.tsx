@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
+import { useAuth } from "../lib/auth-context";
 import { Button } from "@workspace/ui/components/button";
 import {
   DropdownMenu,
@@ -13,10 +13,10 @@ import {
 import { User, Settings, LogOut, Plus, Home } from "lucide-react";
 
 export function Navigation() {
-  const { data: session, status } = useSession();
+  const { session, status, logout } = useAuth();
 
-  const handleSignOut = () => {
-    signOut({ callbackUrl: "/" });
+  const handleSignOut = async () => {
+    await logout();
   };
 
   return (

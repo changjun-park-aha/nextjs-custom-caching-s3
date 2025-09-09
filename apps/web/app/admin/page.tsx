@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "../../lib/auth-context";
 import { useRouter } from "next/navigation";
 import { Button } from "@workspace/ui/components/button";
 import {
@@ -47,7 +47,7 @@ interface Comment {
 }
 
 export default function AdminPage() {
-  const { data: session, status } = useSession();
+  const { session, status } = useAuth();
   const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
