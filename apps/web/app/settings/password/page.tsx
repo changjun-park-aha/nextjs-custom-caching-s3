@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
@@ -16,7 +16,7 @@ import { Label } from "@workspace/ui/components/label";
 import { Alert, AlertDescription } from "@workspace/ui/components/alert";
 
 export default function ChangePasswordPage() {
-  const { data: session, status } = useSession();
+  const { session, status } = useAuth();
   const router = useRouter();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");

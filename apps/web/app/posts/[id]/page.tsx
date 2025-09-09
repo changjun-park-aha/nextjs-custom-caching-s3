@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "@/lib/auth-context";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
@@ -47,10 +47,11 @@ interface Comment {
 }
 
 export default function PostPage() {
-  const { data: session } = useSession();
+  const { session } = useAuth();
   const params = useParams();
   const router = useRouter();
   const postId = params.id as string;
+  const user = session?.user;
 
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -101,7 +102,7 @@ export default function PostPage() {
     targetType: "post" | "comment",
     voteType: "upvote" | "downvote"
   ) => {
-    if (!session) {
+    if (!user) {
       router.push("/auth/login");
       return;
     }
@@ -134,7 +135,7 @@ export default function PostPage() {
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!session || !newComment.trim()) return;
+    if (!user || !newComment.trim()) return;
 
     setSubmitting(true);
     try {
@@ -163,7 +164,7 @@ export default function PostPage() {
   };
 
   const handleReplySubmit = async (parentId: string) => {
-    if (!session || !replyContent.trim()) return;
+    if (!user || !replyContent.trim()) return;
 
     setSubmitting(true);
     try {
@@ -260,7 +261,7 @@ export default function PostPage() {
             </div>
 
             <div className="flex space-x-2">
-              {session && (
+              {user && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -273,14 +274,12 @@ export default function PostPage() {
                 </Button>
               )}
 
-              {session &&
-                (session.user.id === comment.author.id ||
-                  session.user.isAdmin) && (
-                  <Button variant="ghost" size="sm" className="text-red-600">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </Button>
-                )}
+              {user && (user.id === comment.author.id || user.isAdmin) && (
+                <Button variant="ghost" size="sm" className="text-red-600">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              )}
             </div>
 
             {replyingTo === comment.id && (
@@ -367,25 +366,19 @@ export default function PostPage() {
                 <span className="font-medium">{post.author.nickname}</span>
                 <span>•</span>
                 <span>{new Date(post.createdAt).toLocaleDateString()}</span>
-                {session &&
-                  (session.user.id === post.author.id ||
-                    session.user.isAdmin) && (
-                    <>
-                      <span>•</span>
-                      <Button variant="ghost" size="sm">
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-600"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                      </Button>
-                    </>
-                  )}
+                {user && (user.id === post.author.id || user.isAdmin) && (
+                  <>
+                    <span>•</span>
+                    <Button variant="ghost" size="sm">
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-red-600">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -398,7 +391,7 @@ export default function PostPage() {
       </Card>
 
       {/* Comment Form */}
-      {session ? (
+      {user ? (
         <Card className="mb-8">
           <CardContent className="pt-6">
             <form onSubmit={handleCommentSubmit}>

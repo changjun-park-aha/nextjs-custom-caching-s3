@@ -1,12 +1,11 @@
 "use client";
 
-import { SessionProvider } from "next-auth/react";
-
-interface Props {
+// This file is no longer needed as we've replaced NextAuth.js with custom authentication
+// The AuthProvider from auth-context.tsx is now used instead
+export default function AuthSessionProvider({
+  children,
+}: {
   children: React.ReactNode;
-  session?: any;
-}
-
-export default function AuthSessionProvider({ children, session }: Props) {
-  return <SessionProvider session={session}>{children}</SessionProvider>;
+}) {
+  return <>{children}</>;
 }

@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import bcrypt from "bcryptjs";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import {
@@ -16,6 +14,7 @@ import {
 } from "@workspace/ui/components/card";
 import { Label } from "@workspace/ui/components/label";
 import { Alert, AlertDescription } from "@workspace/ui/components/alert";
+import { useAuth } from "@/lib/auth-context";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -25,6 +24,7 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,17 +58,12 @@ export default function SignupPage() {
 
       if (response.ok) {
         // Auto-login after successful signup
-        const result = await signIn("credentials", {
-          email,
-          password,
-          redirect: false,
-        });
-
-        if (result?.error) {
-          setError("Account created but login failed. Please try logging in.");
-        } else {
+        const success = await login(email, password);
+        if (success) {
           router.push("/");
           router.refresh();
+        } else {
+          setError("Account created but login failed. Please try logging in.");
         }
       } else {
         const data = await response.json();
