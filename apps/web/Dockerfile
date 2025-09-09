@@ -1,62 +1,64 @@
-# Base stage
+# 1. 베이스 이미지 설정
 FROM node:20-alpine AS base
 WORKDIR /app
-RUN corepack enable pnpm && corepack prepare pnpm@latest --activate
 
-# Dependencies stage - optimized for pnpm-lock.yaml caching
+# corepack을 설치하고, pnpm을 활성화
+RUN corepack enable pnpm
+
+# pnpm의 위치를 확인하여 설치 확인
+RUN corepack prepare pnpm@latest --activate
+RUN which pnpm && pnpm --version
+
+# 2. 빌드 의존성 단계
 FROM base AS deps
 WORKDIR /app
+# 앱의 루트 디렉토리로부터 파일을 복사
 
-# Copy only package files first (critical for caching)
-# This layer will be cached as long as pnpm-lock.yaml doesn't change
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/web/package.json ./apps/web/
-COPY packages/*/package.json ./packages/
+COPY package.json ./
+COPY pnpm-lock.yaml ./
+COPY pnpm-workspace.yaml ./
+COPY tsconfig.json ./
+COPY turbo.json ./
 
-# Install dependencies with cache mount for maximum efficiency
-# The cache mount persists pnpm store across builds
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store/v3 \
-  pnpm install --frozen-lockfile --prefer-offline
+# # 앱의 실제 소스 파일 복사
+COPY apps/web ./apps/web
+# # 앱의 Dependency 파일 복사
+COPY packages ./packages
 
-# Source stage - copy source code after dependencies
-FROM base AS source
+# pnpm을 사용하여 의존성 설치
+RUN pnpm install --frozen-lockfile
+
+# 3. 빌드 단계
+FROM base AS builder
 WORKDIR /app
 
-# Copy installed dependencies from deps stage
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
-COPY --from=deps /app/packages/*/node_modules ./packages/
-
-# Copy source files (this layer changes frequently but deps don't)
-COPY . .
-
-# Build stage
-FROM source AS builder
+# node_modules를 복사
+COPY --from=deps /app ./
 ENV TURBO_TELEMETRY_DISABLE=1
 ENV DO_NOT_TRACK=1
-ENV NODE_ENV=production
+# 앱을 빌드
+RUN pnpm build --filter=./apps/web
 
-# Build the application
-RUN pnpm turbo build --filter=web
-
-# Production runtime stage
-FROM node:20-alpine AS runner
+# 4. 런타임 단계
+FROM base AS runner
 WORKDIR /app
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs && \
-  adduser --system --uid 1001 nextjs
+COPY --from=builder /app/apps/web/public ./apps/web/public
 
-# Copy built application
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+USER nextjs
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 
-USER nextjs
+
 EXPOSE 3000
+# 앱을 실행
+CMD ["node", "./apps/web/server.js"]
 
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-ENV NODE_ENV=production
-
-CMD ["node", "apps/web/server.js"]
