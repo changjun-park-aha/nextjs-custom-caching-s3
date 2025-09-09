@@ -13,6 +13,9 @@
   },
   "dependencies": {
     "@workspace/ui": "workspace:*",
+    "drizzle-orm": "^0.44.5",
+    "effect": "^3.17.13",
+    "hono": "^4.9.6",
     "lucide-react": "^0.475.0",
     "next": "^15.4.5",
     "next-themes": "^0.4.6",
@@ -20,12 +23,13 @@
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.11",
     "@types/node": "^20.19.9",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",
     "@workspace/eslint-config": "workspace:^",
     "@workspace/typescript-config": "workspace:*",
-    "typescript": "^5.9.2",
-    "@tailwindcss/postcss": "^4.1.11"
+    "drizzle-kit": "^0.31.4",
+    "typescript": "^5.9.2"
   }
 }

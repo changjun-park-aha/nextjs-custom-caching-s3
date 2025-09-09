@@ -1,5 +1,5 @@
 # 1. 베이스 이미지 설정
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 WORKDIR /app
 
 # corepack을 설치하고, pnpm을 활성화

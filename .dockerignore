@@ -79,3 +79,7 @@ coverage
 # Storybook build outputs
 .out
 .storybook-out
+
+# Docker Compose development files (exclude from production builds)
+docker-compose*.yml
+docker-compose.dev.Dockerfile
