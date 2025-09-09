@@ -26,7 +26,7 @@ COPY apps/web ./apps/web
 COPY packages ./packages
 
 # pnpm을 사용하여 의존성 설치
-RUN pnpm install --workspace-root --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 RUN pnpm install --frozen-lockfile --filter=./packages...
 RUN pnpm install --frozen-lockfile --filter=./apps/web...
 
