@@ -6,7 +6,7 @@ export default function Page() {
       <div className="flex flex-col items-center justify-center gap-4">
         <h1 className="text-2xl font-bold">Hello World</h1>
         <Button size="sm">Button</Button>
-        <span>Trigger 3</span>
+        <span>Trigger 4</span>
       </div>
     </div>
   );
