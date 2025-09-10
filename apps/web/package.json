@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@workspace/ui": "workspace:*",
+    "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.5",
     "effect": "^3.17.13",
     "hono": "^4.9.6",
@@ -40,7 +41,6 @@
     "@types/react-dom": "^19.1.7",
     "@workspace/eslint-config": "workspace:^",
     "@workspace/typescript-config": "workspace:*",
-    "drizzle-kit": "^0.31.4",
     "typescript": "^5.9.2"
   }
 }
