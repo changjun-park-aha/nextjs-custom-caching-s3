@@ -1,4 +1,4 @@
-version: '3.8'
+
 
 services:
   postgres:
@@ -22,7 +22,7 @@ services:
       - app-network
 
   web:
-    image: ${IMAGE_URL}
+    image: ${IMAGE_URL:-ghcr.io/changjun-park-aha/nextjs-custom-caching-s3:latest}
     container_name: nextjs-custom-caching-s3
     restart: unless-stopped
     ports:
