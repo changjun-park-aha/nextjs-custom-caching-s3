@@ -15,6 +15,16 @@ import {
 } from "@workspace/ui/components/card";
 import { Label } from "@workspace/ui/components/label";
 import { Alert, AlertDescription } from "@workspace/ui/components/alert";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@workspace/ui/components/tabs";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import "highlight.js/styles/github.css";
 
 export default function CreatePostPage() {
   const { session, status } = useAuth();
@@ -23,6 +33,7 @@ export default function CreatePostPage() {
   const [content, setContent] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("write");
 
   if (status === "loading") {
     return (
@@ -75,12 +86,12 @@ export default function CreatePostPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
       <Card>
         <CardHeader>
           <CardTitle>Create New Post</CardTitle>
           <CardDescription>
-            Share your thoughts with the community.
+            Share your thoughts with the community using Markdown formatting.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -112,20 +123,70 @@ export default function CreatePostPage() {
 
             <div className="space-y-2">
               <Label htmlFor="content">Content</Label>
-              <Textarea
-                id="content"
-                value={content}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                  setContent(e.target.value)
-                }
-                required
-                placeholder="Write your post content here..."
-                disabled={isLoading}
-                rows={10}
-                className="resize-none"
-              />
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="write">Write</TabsTrigger>
+                  <TabsTrigger value="preview">Preview</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="write" className="mt-2">
+                  <Textarea
+                    id="content"
+                    value={content}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                      setContent(e.target.value)
+                    }
+                    required
+                    placeholder="Write your post content here using Markdown...
+
+**Bold text**, *italic text*
+
+# Heading 1
+## Heading 2
+
+- Bullet point
+1. Numbered list
+
+[Link text](https://example.com)
+
+```javascript
+// Code block
+console.log('Hello, world!');
+```
+
+> Blockquote"
+                    disabled={isLoading}
+                    rows={15}
+                    className="resize-none font-mono"
+                  />
+                </TabsContent>
+
+                <TabsContent value="preview" className="mt-2">
+                  <div className="border rounded-md p-3 min-h-[380px] bg-gray-50 dark:bg-gray-800 overflow-auto">
+                    {content ? (
+                      <div className="prose dark:prose-invert max-w-none">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          rehypePlugins={[rehypeHighlight]}
+                        >
+                          {content}
+                        </ReactMarkdown>
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 italic">
+                        Write some content to see the preview here...
+                      </p>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+
               <p className="text-sm text-gray-500">
-                {content.length} characters
+                {content.length} characters • Supports Markdown formatting
               </p>
             </div>
 

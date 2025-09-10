@@ -8,6 +8,16 @@ import { Textarea } from "@workspace/ui/components/textarea";
 import { Card, CardContent, CardHeader } from "@workspace/ui/components/card";
 import { Alert, AlertDescription } from "@workspace/ui/components/alert";
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@workspace/ui/components/tabs";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import "highlight.js/styles/github.css";
+import {
   ChevronUp,
   ChevronDown,
   MessageCircle,
@@ -61,6 +71,8 @@ export default function PostPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [commentTab, setCommentTab] = useState("write");
+  const [replyTab, setReplyTab] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (postId) {
@@ -256,8 +268,13 @@ export default function PostPage() {
               <span>{new Date(comment.createdAt).toLocaleDateString()}</span>
             </div>
 
-            <div className="prose prose-sm max-w-none">
-              <p className="whitespace-pre-wrap">{comment.content}</p>
+            <div className="prose dark:prose-invert prose-sm max-w-none">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeHighlight]}
+              >
+                {comment.content}
+              </ReactMarkdown>
             </div>
 
             <div className="flex space-x-2">
@@ -284,12 +301,48 @@ export default function PostPage() {
 
             {replyingTo === comment.id && (
               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                <Textarea
-                  value={replyContent}
-                  onChange={(e) => setReplyContent(e.target.value)}
-                  placeholder="Write your reply..."
-                  rows={3}
-                />
+                <Tabs
+                  value={replyTab[comment.id] || "write"}
+                  onValueChange={(value) =>
+                    setReplyTab({ ...replyTab, [comment.id]: value })
+                  }
+                  className="w-full"
+                >
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="write">Write</TabsTrigger>
+                    <TabsTrigger value="preview">Preview</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="write" className="mt-2">
+                    <Textarea
+                      value={replyContent}
+                      onChange={(e) => setReplyContent(e.target.value)}
+                      placeholder="Write your reply using Markdown..."
+                      rows={3}
+                      className="font-mono"
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="preview" className="mt-2">
+                    <div className="border rounded-md p-3 min-h-[80px] bg-white">
+                      {replyContent ? (
+                        <div className="prose dark:prose-invert prose-sm max-w-none">
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            rehypePlugins={[rehypeHighlight]}
+                          >
+                            {replyContent}
+                          </ReactMarkdown>
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 italic">
+                          Write some content to see the preview here...
+                        </p>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+
                 <div className="flex space-x-2 mt-2">
                   <Button
                     size="sm"
@@ -304,6 +357,7 @@ export default function PostPage() {
                     onClick={() => {
                       setReplyingTo(null);
                       setReplyContent("");
+                      setReplyTab({ ...replyTab, [comment.id]: "write" });
                     }}
                   >
                     Cancel
@@ -384,8 +438,13 @@ export default function PostPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="prose max-w-none">
-            <p className="whitespace-pre-wrap">{post.content}</p>
+          <div className="dark:prose-invert prose max-w-none">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeHighlight]}
+            >
+              {post.content}
+            </ReactMarkdown>
           </div>
         </CardContent>
       </Card>
@@ -395,17 +454,55 @@ export default function PostPage() {
         <Card className="mb-8">
           <CardContent className="pt-6">
             <form onSubmit={handleCommentSubmit}>
-              <Textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Write a comment..."
-                rows={4}
-                className="mb-4"
-              />
-              <Button type="submit" disabled={submitting || !newComment.trim()}>
-                <MessageCircle className="h-4 w-4 mr-2" />
-                {submitting ? "Posting..." : "Post Comment"}
-              </Button>
+              <Tabs
+                value={commentTab}
+                onValueChange={setCommentTab}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="write">Write</TabsTrigger>
+                  <TabsTrigger value="preview">Preview</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="write" className="mt-2">
+                  <Textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Write a comment using Markdown..."
+                    rows={4}
+                    className="font-mono"
+                  />
+                </TabsContent>
+
+                <TabsContent value="preview" className="mt-2">
+                  <div className="border rounded-md p-3 min-h-[100px] bg-gray-50">
+                    {newComment ? (
+                      <div className="prose dark:prose-invert prose-sm max-w-none">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          rehypePlugins={[rehypeHighlight]}
+                        >
+                          {newComment}
+                        </ReactMarkdown>
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 italic">
+                        Write some content to see the preview here...
+                      </p>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+
+              <div className="mt-4">
+                <Button
+                  type="submit"
+                  disabled={submitting || !newComment.trim()}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  {submitting ? "Posting..." : "Post Comment"}
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>

@@ -5,6 +5,7 @@ export const posts = pgTable('posts', {
   id: uuid('id').primaryKey().defaultRandom(),
   title: varchar('title', { length: 255 }).notNull(),
   content: text('content').notNull(),
+  renderer: varchar('renderer', { length: 50 }).notNull().default('markdown'), // e.g., 'markdown', 'html'
   authorId: uuid('author_id').references(() => users.id).notNull(),
   upvotes: integer('upvotes').default(0).notNull(),
   downvotes: integer('downvotes').default(0).notNull(),

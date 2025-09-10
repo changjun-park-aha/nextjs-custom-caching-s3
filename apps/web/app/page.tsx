@@ -5,6 +5,10 @@ import { useAuth } from "../lib/auth-context";
 import Link from "next/link";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent, CardHeader } from "@workspace/ui/components/card";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import "highlight.js/styles/github.css";
 import {
   ChevronUp,
   ChevronDown,
@@ -133,11 +137,50 @@ export default function HomePage() {
               <span>{new Date(post.createdAt).toLocaleDateString()}</span>
             </div>
 
-            <div className="prose prose-sm max-w-none">
-              <p className="text-gray-700 line-clamp-3">
-                {post.content.slice(0, 200)}
-                {post.content.length > 200 && "..."}
-              </p>
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              <div className="line-clamp-3">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeHighlight]}
+                  components={{
+                    // Limit rendering to simple elements for preview
+                    h1: ({ children }) => (
+                      <span className="font-bold text-lg">{children}</span>
+                    ),
+                    h2: ({ children }) => (
+                      <span className="font-bold text-base">{children}</span>
+                    ),
+                    h3: ({ children }) => (
+                      <span className="font-bold">{children}</span>
+                    ),
+                    h4: ({ children }) => (
+                      <span className="font-bold">{children}</span>
+                    ),
+                    h5: ({ children }) => (
+                      <span className="font-bold">{children}</span>
+                    ),
+                    h6: ({ children }) => (
+                      <span className="font-bold">{children}</span>
+                    ),
+                    blockquote: ({ children }) => (
+                      <span className="italic text-gray-600">{children}</span>
+                    ),
+                    ul: ({ children }) => <span>{children}</span>,
+                    ol: ({ children }) => <span>{children}</span>,
+                    li: ({ children }) => <span>{children}</span>,
+                    code: ({ children }) => (
+                      <code className="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono">
+                        {children}
+                      </code>
+                    ),
+                    pre: ({ children }) => <span>{children}</span>,
+                  }}
+                >
+                  {post.content.length > 200
+                    ? post.content.slice(0, 200) + "..."
+                    : post.content}
+                </ReactMarkdown>
+              </div>
             </div>
           </div>
         </div>
