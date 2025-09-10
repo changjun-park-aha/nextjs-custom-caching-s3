@@ -16,11 +16,6 @@ echo "Starting deployment for branch: $BRANCH_NAME"
 echo "Image: $IMAGE_URL"
 echo "============================================="
 
-# Set up environment variables for production
-export POSTGRES_DB=${POSTGRES_DB:-"nextjs_prod"}
-export POSTGRES_USER=${POSTGRES_USER:-"postgres"}
-export POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-"postgres"}
-export JWT_SECRET=${JWT_SECRET:-"your-super-secret-jwt-key-change-this-in-production"}
 export IMAGE_URL=$IMAGE_URL
 
 echo "Environment Configuration:"
