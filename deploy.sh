@@ -22,6 +22,7 @@ echo "Environment Configuration:"
 echo "- Database: $POSTGRES_DB"
 echo "- PostgreSQL User: $POSTGRES_USER"
 echo "- Image: $IMAGE_URL"
+echo "- JWT_SECRET: ${JWT_SECRET}"
 
 # =======================
 # Docker Registry Login
