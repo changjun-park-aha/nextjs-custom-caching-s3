@@ -17,6 +17,7 @@ echo "Image: $IMAGE_URL"
 echo "============================================="
 
 export IMAGE_URL=$IMAGE_URL
+export JWT_SECRET=$JWT_SECRET
 
 echo "Environment Configuration:"
 echo "- Database: $POSTGRES_DB"
