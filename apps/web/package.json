@@ -13,14 +13,18 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:r:push": "dotenv -e .env.production.local -- drizzle-kit push"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.10.0",
     "@workspace/ui": "workspace:*",
+    "bcryptjs": "^2.4.3",
     "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.5",
     "effect": "^3.17.13",
     "hono": "^4.9.6",
+    "jose": "^5.9.6",
     "lucide-react": "^0.475.0",
     "next": "^15.4.5",
     "next-themes": "^0.4.6",
@@ -28,10 +32,7 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hook-form": "^7.57.0",
-    "zod": "^3.24.1",
-    "@hookform/resolvers": "^3.10.0",
-    "bcryptjs": "^2.4.3",
-    "jose": "^5.9.6"
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.11",
@@ -41,6 +42,7 @@
     "@types/react-dom": "^19.1.7",
     "@workspace/eslint-config": "workspace:^",
     "@workspace/typescript-config": "workspace:*",
+    "dotenv-cli": "^10.0.0",
     "typescript": "^5.9.2"
   }
 }
