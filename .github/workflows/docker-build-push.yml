@@ -112,4 +112,4 @@ jobs:
             export GITHUB_TOKEN=${{ secrets.GHCR_TOKEN }}
             export JWT_SECRET=${{ secrets.JWT_SECRET }}
             export GITHUB_USERNAME=${{ github.actor }}
-            ./deploy.sh ${{ github.ref_name }} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+            ./deploy.sh ${{ github.ref_name }} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
