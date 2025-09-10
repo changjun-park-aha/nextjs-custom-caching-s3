@@ -35,6 +35,9 @@ importers:
       bcryptjs:
         specifier: ^2.4.3
         version: 2.4.3
+      drizzle-kit:
+        specifier: ^0.31.4
+        version: 0.31.4
       drizzle-orm:
         specifier: ^0.44.5
         version: 0.44.5(postgres@3.4.7)
@@ -93,9 +96,6 @@ importers:
       '@workspace/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
-      drizzle-kit:
-        specifier: ^0.31.4
-        version: 0.31.4
       typescript:
         specifier: ^5.9.2
         version: 5.9.2
