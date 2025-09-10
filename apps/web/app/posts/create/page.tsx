@@ -91,7 +91,7 @@ export default function CreatePostPage() {
         <CardHeader>
           <CardTitle>Create New Post</CardTitle>
           <CardDescription>
-            Share your thoughts with the community using Markdown formatting.
+            Share your thoughts with the community using Markdown.
           </CardDescription>
         </CardHeader>
         <CardContent>
