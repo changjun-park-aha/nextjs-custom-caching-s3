@@ -16,13 +16,12 @@ echo "Image: $IMAGE_URL"
 echo "============================================="
 
 export IMAGE_URL=$IMAGE_URL
-export JWT_SECRET=$JWT_SECRET
 
 echo "Environment Configuration:"
 echo "- Database: $POSTGRES_DB"
 echo "- PostgreSQL User: $POSTGRES_USER"
 echo "- Image: $IMAGE_URL"
-echo "- JWT_SECRET: ${JWT_SECRET}"
+echo "- JWT_SECRET: $JWT_SECRET"
 
 # =======================
 # Docker Registry Login
@@ -51,7 +50,7 @@ sudo docker-compose -f $COMPOSE_FILE down --remove-orphans || true
 
 # Start services with the new image
 echo "Starting services with Docker Compose..."
-sudo JWT_SECRET=$JWT_SECRET docker-compose -f $COMPOSE_FILE up -d
+sudo docker-compose -f $COMPOSE_FILE up -d
 
 # =======================
 # Health Checks
