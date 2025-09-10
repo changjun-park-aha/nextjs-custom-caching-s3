@@ -41,6 +41,8 @@ sudo docker pull $IMAGE_URL
 # Docker Compose Deployment
 # =======================
 echo "Managing services with Docker Compose..."
+# Remove existing nextjs-postgres-prod container if it exists
+sudo docker rm -f nextjs-postgres-prod 2>/dev/null || true
 
 # Stop existing services
 echo "Stopping existing services..."
