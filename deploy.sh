@@ -51,7 +51,7 @@ sudo docker-compose -f $COMPOSE_FILE down --remove-orphans || true
 
 # Start services with the new image
 echo "Starting services with Docker Compose..."
-sudo docker-compose -f $COMPOSE_FILE up -d
+sudo JWT_SECRET=$JWT_SECRET docker-compose -f $COMPOSE_FILE up -d
 
 # =======================
 # Health Checks
