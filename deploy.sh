@@ -1,19 +1,35 @@
 #!/bin/bash
 
-# Deployment script for EC2
+# Deployment script for remote server with Docker Compose
 # Usage: ./deploy.sh <branch_name> <image_url>
 
 set -e
 
 BRANCH_NAME=$1
 IMAGE_URL=$2
-CONTAINER_NAME="nextjs-custom-caching-s3"
+COMPOSE_FILE="docker-compose.prod.yml"
 PORT=3000
 
+echo "============================================="
 echo "Starting deployment for branch: $BRANCH_NAME"
 echo "Image: $IMAGE_URL"
+echo "============================================="
 
-# Log in to GitHub Container Registry
+# Set up environment variables for production
+export POSTGRES_DB=${POSTGRES_DB:-"nextjs_prod"}
+export POSTGRES_USER=${POSTGRES_USER:-"postgres"}
+export POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-"postgres"}
+export JWT_SECRET=${JWT_SECRET:-"your-super-secret-jwt-key-change-this-in-production"}
+export IMAGE_URL=$IMAGE_URL
+
+echo "Environment Configuration:"
+echo "- Database: $POSTGRES_DB"
+echo "- PostgreSQL User: $POSTGRES_USER"
+echo "- Image: $IMAGE_URL"
+
+# =======================
+# Docker Registry Login
+# =======================
 echo "Logging in to GitHub Container Registry..."
 echo $GITHUB_TOKEN | sudo docker login ghcr.io -u $GITHUB_USERNAME --password-stdin
 
@@ -21,36 +37,80 @@ echo $GITHUB_TOKEN | sudo docker login ghcr.io -u $GITHUB_USERNAME --password-st
 echo "Pulling latest image..."
 sudo docker pull $IMAGE_URL
 
-# Stop and remove existing container if it exists
-echo "Stopping existing container..."
-sudo docker stop $CONTAINER_NAME 2>/dev/null || true
-sudo docker rm $CONTAINER_NAME 2>/dev/null || true
+# =======================
+# Docker Compose Deployment
+# =======================
+echo "Managing services with Docker Compose..."
 
-# Run the new container
-echo "Starting new container..."
-sudo docker run -d \
-  --name $CONTAINER_NAME \
-  --restart unless-stopped \
-  -p $PORT:3000 \
-  -e NODE_ENV=production \
-  -e DATABASE_URL=postgresql://postgres:your-secure-postgres-password@nextjs-postgres-prod:5432/nextjs_prod \
-  -e JWT_SECRET=your-super-secret-jwt-key-change-this-in-production \
-  $IMAGE_URL
+# Stop existing services
+echo "Stopping existing services..."
+sudo docker-compose -f $COMPOSE_FILE down || true
 
-# Clean up old images
-echo "Cleaning up old images..."
-sudo docker image prune -af
+# Remove any orphaned containers
+echo "Cleaning up orphaned containers..."
+sudo docker-compose -f $COMPOSE_FILE down --remove-orphans || true
 
-# Health check
-echo "Waiting for application to start..."
-sleep 10
+# Start services with the new image
+echo "Starting services with Docker Compose..."
+sudo docker-compose -f $COMPOSE_FILE up -d
 
-if curl -f http://localhost:$PORT/api/health 2>/dev/null; then
-  echo "Deployment successful! Application is running on port $PORT"
+# =======================
+# Health Checks
+# =======================
+echo "Performing health checks..."
+
+# Wait for services to start
+echo "Waiting for services to start..."
+sleep 20
+
+# Check PostgreSQL health
+echo "Checking PostgreSQL health..."
+max_attempts=30
+attempt=0
+while ! sudo docker-compose -f $COMPOSE_FILE exec -T postgres pg_isready -U $POSTGRES_USER -d $POSTGRES_DB > /dev/null 2>&1; do
+  attempt=$((attempt + 1))
+  if [ $attempt -ge $max_attempts ]; then
+    echo "❌ ERROR: PostgreSQL failed to start within 60 seconds"
+    sudo docker-compose -f $COMPOSE_FILE logs postgres
+    exit 1
+  fi
+  echo "🔄 PostgreSQL not ready yet... waiting (attempt $attempt/$max_attempts)"
+  sleep 2
+done
+
+echo "✅ PostgreSQL health check: PASSED"
+
+# Check application health
+echo "Checking application health..."
+sleep 5
+
+if curl -f http://localhost:$PORT/api/auth/session 2>/dev/null; then
+  echo "✅ Application health check: PASSED"
+  echo "🚀 Deployment successful! Application is running on port $PORT"
 else
-  echo "Warning: Health check failed, but container is running"
-  echo "Container logs:"
-  sudo docker logs --tail 50 $CONTAINER_NAME
+  echo "❌ Application health check: FAILED"
+  echo "Application logs:"
+  sudo docker-compose -f $COMPOSE_FILE logs web
+  echo ""
+  echo "PostgreSQL logs:"
+  sudo docker-compose -f $COMPOSE_FILE logs postgres
 fi
 
+# Clean up old images
+echo "Cleaning up old Docker images..."
+sudo docker image prune -af
+
+echo ""
+echo "============================================="
+echo "Deployment Summary:"
+echo "- Services: Started with Docker Compose"
+echo "- PostgreSQL: Running with persistent volume"
+echo "- Application: Running on port $PORT"
+echo "- Database: $POSTGRES_DB"
+echo "- Network: app-network (bridge)"
+echo "============================================="
+echo ""
+echo "Service Status:"
+sudo docker-compose -f $COMPOSE_FILE ps
+echo ""
 echo "Deployment complete!"
