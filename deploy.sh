@@ -4,7 +4,6 @@
 # Usage: ./deploy.sh <branch_name> <image_url>
 
 set -e
-source ~/.bashrc
 
 BRANCH_NAME=$1
 IMAGE_URL=$2
