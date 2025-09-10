@@ -33,7 +33,7 @@ sudo docker run -d \
   --restart unless-stopped \
   -p $PORT:3000 \
   -e NODE_ENV=production \
-  -e DATABASE_URL=postgresql://postgres:your-secure-postgres-password@localhost:5432/nextjs_prod \
+  -e DATABASE_URL=postgresql://postgres:your-secure-postgres-password@nextjs-postgres-prod:5432/nextjs_prod \
   -e JWT_SECRET=your-super-secret-jwt-key-change-this-in-production \
   $IMAGE_URL
 
