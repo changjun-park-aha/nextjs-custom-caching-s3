@@ -300,7 +300,7 @@ export default function PostPage() {
             </div>
 
             {replyingTo === comment.id && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <Tabs
                   value={replyTab[comment.id] || "write"}
                   onValueChange={(value) =>
@@ -475,7 +475,7 @@ export default function PostPage() {
                 </TabsContent>
 
                 <TabsContent value="preview" className="mt-2">
-                  <div className="border rounded-md p-3 min-h-[100px] bg-gray-50">
+                  <div className="border rounded-md p-3 min-h-[100px] bg-gray-50 dark:bg-gray-800 overflow-auto">
                     {newComment ? (
                       <div className="prose dark:prose-invert prose-sm max-w-none">
                         <ReactMarkdown

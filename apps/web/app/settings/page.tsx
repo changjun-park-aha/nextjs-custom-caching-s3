@@ -125,7 +125,7 @@ export default function SettingsPage() {
                   type="email"
                   value={session?.user?.email || ""}
                   disabled
-                  className="bg-gray-50"
+                  className="bg-gray-50 dark:bg-gray-800"
                 />
                 <p className="text-xs text-gray-500">
                   Email address cannot be changed
