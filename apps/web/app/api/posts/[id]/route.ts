@@ -28,10 +28,7 @@ export async function GET(
         downvotes: posts.downvotes,
         createdAt: posts.createdAt,
         updatedAt: posts.updatedAt,
-        author: {
-          id: users.id,
-          nickname: users.nickname,
-        },
+        authorId: posts.authorId,
       })
       .from(posts)
       .leftJoin(users, and(eq(posts.authorId, users.id), isNull(users.deletedAt)))

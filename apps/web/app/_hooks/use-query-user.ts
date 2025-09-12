@@ -7,7 +7,7 @@ export function useQueryUser(userId: string) {
   return useQuery({
     queryKey: ["user", userId],
     queryFn: async (): Promise<User> => {
-      const response = await fetch(`/api/users/${userId}`);
+      const response = await fetch(`/api/user/${userId}`);
       if (!response.ok) {
         throw new Error("User not found");
       }
