@@ -1,30 +1,30 @@
-"use client";
+'use client'
 
-import { useMutationCreateComment } from "@/app/_hooks/use-mutation-create-comment";
-import { useQueryComments } from "@/app/_hooks/use-query-comments";
-import { useAuth } from "@/lib/auth-context";
-import type { Post } from "@/schemas";
-import type { Comment } from "@/schemas/comments";
-import { Button } from "@workspace/ui/components/button";
+import { Button } from '@workspace/ui/components/button'
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@workspace/ui/components/tabs";
-import { Textarea } from "@workspace/ui/components/textarea";
-import { Reply, Trash2, User } from "lucide-react";
-import { useState } from "react";
-import ReactMarkdown from "react-markdown";
-import rehypeHighlight from "rehype-highlight";
-import remarkGfm from "remark-gfm";
-import { VoteButtons } from "./vote-buttons";
-import { useQueryUser } from "@/app/_hooks/use-query-user";
+} from '@workspace/ui/components/tabs'
+import { Textarea } from '@workspace/ui/components/textarea'
+import { Reply, Trash2, User } from 'lucide-react'
+import { useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import rehypeHighlight from 'rehype-highlight'
+import remarkGfm from 'remark-gfm'
+import { useMutationCreateComment } from '@/app/_hooks/use-mutation-create-comment'
+import { useQueryComments } from '@/app/_hooks/use-query-comments'
+import { useQueryUser } from '@/app/_hooks/use-query-user'
+import { useAuth } from '@/lib/auth-context'
+import type { Post } from '@/schemas'
+import type { Comment } from '@/schemas/comments'
+import { VoteButtons } from './vote-buttons'
 
 interface CommentItemProps {
-  postId: Post["id"];
-  comment: Comment;
-  isReply?: boolean;
+  postId: Post['id']
+  comment: Comment
+  isReply?: boolean
 }
 
 export function CommentItem({
@@ -32,19 +32,19 @@ export function CommentItem({
   comment,
   isReply = false,
 }: CommentItemProps) {
-  const { session } = useAuth();
-  const user = session?.user;
+  const { session } = useAuth()
+  const user = session?.user
 
-  const { data: comments = [] } = useQueryComments(postId);
-  const { data: author } = useQueryUser(comment.authorId);
-  const createCommentMutation = useMutationCreateComment();
+  const { data: comments = [] } = useQueryComments(postId)
+  const { data: author } = useQueryUser(comment.authorId)
+  const createCommentMutation = useMutationCreateComment()
 
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [replyTab, setReplyTab] = useState<{ [key: string]: string }>({});
-  const [replyContent, setReplyContent] = useState<string>("");
+  const [replyingTo, setReplyingTo] = useState<string | null>(null)
+  const [replyTab, setReplyTab] = useState<{ [key: string]: string }>({})
+  const [replyContent, setReplyContent] = useState<string>('')
 
   const handleReplySubmit = (parentId: string) => {
-    if (!user || !replyContent.trim()) return;
+    if (!user || !replyContent.trim()) return
 
     createCommentMutation.mutate(
       {
@@ -55,18 +55,18 @@ export function CommentItem({
       },
       {
         onSuccess: () => {
-          setReplyContent("");
-          setReplyingTo(null);
+          setReplyContent('')
+          setReplyingTo(null)
         },
-      }
-    );
-  };
+      },
+    )
+  }
 
-  const replies = comments.filter((c) => c.parentId === comment.id);
+  const replies = comments.filter((c) => c.parentId === comment.id)
 
   return (
     <div
-      className={`border-l-2 border-gray-200 ${isReply ? "ml-8 mt-4" : "mt-4"}`}
+      className={`border-gray-200 border-l-2 ${isReply ? 'mt-4 ml-8' : 'mt-4'}`}
     >
       <div className="flex space-x-4 p-4">
         <VoteButtons
@@ -77,7 +77,7 @@ export function CommentItem({
         />
 
         <div className="flex-1 space-y-2">
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
+          <div className="flex items-center space-x-2 text-gray-600 text-sm">
             <User className="h-4 w-4" />
             <span className="font-medium">{author?.nickname}</span>
             <span>•</span>
@@ -102,23 +102,23 @@ export function CommentItem({
                   setReplyingTo(replyingTo === comment.id ? null : comment.id)
                 }
               >
-                <Reply className="h-4 w-4 mr-2" />
+                <Reply className="mr-2 h-4 w-4" />
                 Reply
               </Button>
             )}
 
             {user && (user.id === author?.id || user.isAdmin) && (
               <Button variant="ghost" size="sm" className="text-red-600">
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </Button>
             )}
           </div>
 
           {replyingTo === comment.id && (
-            <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div className="mt-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
               <Tabs
-                value={replyTab[comment.id] || "write"}
+                value={replyTab[comment.id] || 'write'}
                 onValueChange={(value) =>
                   setReplyTab({ ...replyTab, [comment.id]: value })
                 }
@@ -140,7 +140,7 @@ export function CommentItem({
                 </TabsContent>
 
                 <TabsContent value="preview" className="mt-2">
-                  <div className="border rounded-md p-3 min-h-[80px] bg-white">
+                  <div className="min-h-[80px] rounded-md border bg-white p-3">
                     {replyContent ? (
                       <div className="prose dark:prose-invert prose-sm max-w-none">
                         <ReactMarkdown
@@ -159,7 +159,7 @@ export function CommentItem({
                 </TabsContent>
               </Tabs>
 
-              <div className="flex space-x-2 mt-2">
+              <div className="mt-2 flex space-x-2">
                 <Button
                   size="sm"
                   onClick={() => handleReplySubmit(comment.id)}
@@ -168,16 +168,16 @@ export function CommentItem({
                   }
                 >
                   {createCommentMutation.isPending
-                    ? "Posting..."
-                    : "Post Reply"}
+                    ? 'Posting...'
+                    : 'Post Reply'}
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    setReplyingTo(null);
-                    setReplyContent("");
-                    setReplyTab({ ...replyTab, [comment.id]: "write" });
+                    setReplyingTo(null)
+                    setReplyContent('')
+                    setReplyTab({ ...replyTab, [comment.id]: 'write' })
                   }}
                 >
                   Cancel
@@ -198,5 +198,5 @@ export function CommentItem({
         />
       ))}
     </div>
-  );
+  )
 }

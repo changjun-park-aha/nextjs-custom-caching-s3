@@ -1,48 +1,32 @@
-"use client";
+'use client'
 
-import { useQueryPosts } from "@/app/_hooks/use-query-posts";
-import { PostCallToAction } from "@/app/post-call-to-action";
-import { PostsList } from "@/app/posts-list";
-import { useAuth } from "@/lib/auth-context";
-import { Button } from "@workspace/ui/components/button";
-import "highlight.js/styles/github.css";
-import { Plus } from "lucide-react";
-import Link from "next/link";
-
-interface Author {
-  id: string;
-  nickname: string;
-}
-
-interface Post {
-  id: string;
-  title: string;
-  content: string;
-  upvotes: number;
-  downvotes: number;
-  createdAt: string;
-  updatedAt: string;
-  author: Author;
-}
+import { Button } from '@workspace/ui/components/button'
+import { useQueryPosts } from '@/app/_hooks/use-query-posts'
+import { PostCallToAction } from '@/app/post-call-to-action'
+import { PostsList } from '@/app/posts-list'
+import { useAuth } from '@/lib/auth-context'
+import 'highlight.js/styles/github.css'
+import { Plus } from 'lucide-react'
+import Link from 'next/link'
 
 export default function HomePage() {
-  const { session } = useAuth();
-  const { data: posts = [], isLoading: loading, error } = useQueryPosts();
+  const { session } = useAuth()
+  const { data: posts = [], isLoading: loading, error } = useQueryPosts()
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto max-w-4xl px-4 py-8">
         <div>Loading posts...</div>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto max-w-4xl px-4 py-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Latest Posts</h1>
+          <h1 className="mb-2 font-bold text-3xl">Latest Posts</h1>
           <p className="text-gray-600">
             Discover and discuss topics with the community
           </p>
@@ -51,7 +35,7 @@ export default function HomePage() {
         {session && (
           <Button asChild>
             <Link href="/posts/create">
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               Create Post
             </Link>
           </Button>
@@ -59,9 +43,9 @@ export default function HomePage() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
           <p className="text-red-600">
-            {error instanceof Error ? error.message : "An error occurred"}
+            {error instanceof Error ? error.message : 'An error occurred'}
           </p>
         </div>
       )}
@@ -74,5 +58,5 @@ export default function HomePage() {
       {/* Call to Action for Non-Authenticated Users */}
       <PostCallToAction isVisible={posts.length > 0} />
     </div>
-  );
+  )
 }

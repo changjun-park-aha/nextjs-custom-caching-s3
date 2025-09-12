@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '../../../../lib/db'
-import { users } from '../../../../schemas/users'
-import { eq, and, isNull } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
+import { type NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { Auth } from '../../../../lib/auth'
+import { db } from '../../../../lib/db'
+import { users } from '../../../../schemas/users'
 
 const updateNicknameSchema = z.object({
   nickname: z.string().min(1).max(50),
@@ -12,8 +12,8 @@ const updateNicknameSchema = z.object({
 export async function PUT(request: NextRequest) {
   try {
     const { session, response } = await Auth.requireAuth(request)
-    
-    if (response) return response
+
+    if (response || !session) return response
 
     const body = await request.json()
     const validatedData = updateNicknameSchema.parse(body)
@@ -22,11 +22,19 @@ export async function PUT(request: NextRequest) {
     const existingUser = await db
       .select()
       .from(users)
-      .where(and(eq(users.nickname, validatedData.nickname), isNull(users.deletedAt)))
+      .where(
+        and(
+          eq(users.nickname, validatedData.nickname),
+          isNull(users.deletedAt),
+        ),
+      )
       .limit(1)
 
     if (existingUser.length > 0 && existingUser[0]!.id !== session.user.id) {
-      return NextResponse.json({ error: 'Nickname already taken' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Nickname already taken' },
+        { status: 400 },
+      )
     }
 
     const updatedUser = await db
@@ -38,24 +46,27 @@ export async function PUT(request: NextRequest) {
       .where(eq(users.id, session.user.id))
       .returning()
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       user: {
         id: updatedUser[0]!.id,
         email: updatedUser[0]!.email,
         nickname: updatedUser[0]!.nickname,
         isAdmin: updatedUser[0]!.isAdmin,
-      }
+      },
     })
   } catch (error) {
     console.error('Error updating nickname:', error)
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: error.errors[0]?.message || 'Validation error' }, 
-        { status: 400 }
+        { error: error.errors[0]?.message || 'Validation error' },
+        { status: 400 },
       )
     }
 
-    return NextResponse.json({ error: 'Failed to update nickname' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to update nickname' },
+      { status: 500 },
+    )
   }
 }

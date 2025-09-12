@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '../../../../lib/db'
-import { posts, users } from '../../../../schemas'
-import { eq, and, isNull } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
+import { type NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { Auth } from '../../../../lib/auth'
+import { db } from '../../../../lib/db'
+import { posts, users } from '../../../../schemas'
 
 // Validation schema for updates
 const updatePostSchema = z.object({
@@ -13,12 +13,12 @@ const updatePostSchema = z.object({
 
 // GET /api/posts/[id] - Get single post
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params
-    
+
     const post = await db
       .select({
         id: posts.id,
@@ -31,7 +31,10 @@ export async function GET(
         authorId: posts.authorId,
       })
       .from(posts)
-      .leftJoin(users, and(eq(posts.authorId, users.id), isNull(users.deletedAt)))
+      .leftJoin(
+        users,
+        and(eq(posts.authorId, users.id), isNull(users.deletedAt)),
+      )
       .where(and(eq(posts.id, id), isNull(posts.deletedAt)))
       .limit(1)
 
@@ -49,12 +52,12 @@ export async function GET(
 // PUT /api/posts/[id] - Update post (authenticated, author only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { session, response } = await Auth.requireAuth(request)
-    
-    if (response) return response
+
+    if (response || !session) return response
 
     const { id } = await params
     const body = await request.json()
@@ -71,7 +74,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
-    if (existingPost[0]!.authorId !== session.user.id && !session.user.isAdmin) {
+    if (
+      existingPost[0]!.authorId !== session.user.id &&
+      !session.user.isAdmin
+    ) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -87,27 +93,30 @@ export async function PUT(
     return NextResponse.json(updatedPost[0])
   } catch (error) {
     console.error('Error updating post:', error)
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: error.errors[0]?.message || 'Validation error' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
-    return NextResponse.json({ error: 'Failed to update post' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to update post' },
+      { status: 500 },
+    )
   }
 }
 
 // DELETE /api/posts/[id] - Soft delete post (authenticated, author or admin)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { session, response } = await Auth.requireAuth(request)
-    
-    if (response) return response
+
+    if (response || !session) return response
 
     const { id } = await params
 
@@ -122,7 +131,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
-    if (existingPost[0]!.authorId !== session.user.id && !session.user.isAdmin) {
+    if (
+      existingPost[0]!.authorId !== session.user.id &&
+      !session.user.isAdmin
+    ) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -136,6 +148,9 @@ export async function DELETE(
     return NextResponse.json({ message: 'Post deleted successfully' })
   } catch (error) {
     console.error('Error deleting post:', error)
-    return NextResponse.json({ error: 'Failed to delete post' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to delete post' },
+      { status: 500 },
+    )
   }
 }

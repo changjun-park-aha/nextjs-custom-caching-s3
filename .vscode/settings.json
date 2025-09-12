@@ -1,7 +1,4 @@
 {
   "tailwindCSS.experimental.configFile": "packages/ui/src/styles/globals.css",
-  "cSpell.words": [
-    "downvotes",
-    "upvotes"
-  ]
+  "cSpell.words": ["downvotes", "Embla", "nums", "upvotes"]
 }

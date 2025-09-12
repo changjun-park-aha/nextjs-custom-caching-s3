@@ -1,168 +1,122 @@
-"use client";
+'use client'
 
-import { useQueryAdminComments } from "@/app/_hooks/use-query-admin-comments";
-import { useQueryAdminPosts } from "@/app/_hooks/use-query-admin-posts";
-import { useMutationDeleteComment } from "@/app/_hooks/use-mutation-delete-comment";
-import { useMutationDeletePost } from "@/app/_hooks/use-mutation-delete-post";
-import { useAuth } from "@/lib/auth-context";
-import { Alert, AlertDescription } from "@workspace/ui/components/alert";
+import { Alert, AlertDescription } from '@workspace/ui/components/alert'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card";
+} from '@workspace/ui/components/card'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { useQueryAdminComments } from '@/app/_hooks/use-query-admin-comments'
+import { useQueryAdminPosts } from '@/app/_hooks/use-query-admin-posts'
+import { useAuth } from '@/lib/auth-context'
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-
-import { PostRow } from "./post-row";
-
-interface Author {
-  id: string;
-  nickname: string;
-}
-
-interface Post {
-  id: string;
-  title: string;
-  content: string;
-  upvotes: number;
-  downvotes: number;
-  createdAt: string;
-  author: Author;
-}
-
-interface Comment {
-  id: string;
-  content: string;
-  postId: string;
-  upvotes: number;
-  downvotes: number;
-  createdAt: string;
-  author: Author;
-}
+import { PostRow } from './post-row'
 
 export default function AdminPage() {
-  const { session, status } = useAuth();
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"posts" | "comments">("posts");
+  const { session, status } = useAuth()
+  const router = useRouter()
+  const [activeTab, setActiveTab] = useState<'posts' | 'comments'>('posts')
 
-  const isAdmin = status === "authenticated" && !!session?.user?.isAdmin;
+  const isAdmin = status === 'authenticated' && !!session?.user?.isAdmin
 
   // React Query hooks
   const {
     data: posts = [],
     isLoading: postsLoading,
     error: postsError,
-  } = useQueryAdminPosts(isAdmin);
+  } = useQueryAdminPosts(isAdmin)
   const {
     data: comments = [],
     isLoading: commentsLoading,
     error: commentsError,
-  } = useQueryAdminComments(isAdmin);
-  const deletePostMutation = useMutationDeletePost();
-  const deleteCommentMutation = useMutationDeleteComment();
+  } = useQueryAdminComments(isAdmin)
 
-  const loading = postsLoading || commentsLoading;
-  const error = postsError || commentsError;
+  const loading = postsLoading || commentsLoading
+  const error = postsError || commentsError
 
   // Redirect non-admin users
   if (
-    status === "unauthenticated" ||
-    (status === "authenticated" && !session?.user?.isAdmin)
+    status === 'unauthenticated' ||
+    (status === 'authenticated' && !session?.user?.isAdmin)
   ) {
-    router.push("/");
-    return null;
+    router.push('/')
+    return null
   }
 
-  const handleDeletePost = (postId: string) => {
-    if (!confirm("Are you sure you want to delete this post?")) {
-      return;
-    }
-
-    deletePostMutation.mutate(postId);
-  };
-
-  const handleDeleteComment = (commentId: string) => {
-    if (!confirm("Are you sure you want to delete this comment?")) {
-      return;
-    }
-
-    deleteCommentMutation.mutate(commentId);
-  };
-
-  if (status === "loading" || loading) {
+  if (status === 'loading' || loading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="container mx-auto max-w-6xl px-4 py-8">
         <div>Loading...</div>
       </div>
-    );
+    )
   }
 
   if (!session?.user?.isAdmin) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="container mx-auto max-w-6xl px-4 py-8">
         <Card>
           <CardContent className="pt-6 text-center">
-            <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+            <h1 className="mb-4 font-bold text-2xl">Access Denied</h1>
             <p className="text-gray-600">
               You don't have permission to access this page.
             </p>
           </CardContent>
         </Card>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <div className="container mx-auto max-w-6xl px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Admin Panel</h1>
+        <h1 className="mb-2 font-bold text-3xl">Admin Panel</h1>
         <p className="text-gray-600">Manage forum content and users</p>
       </div>
 
       {error && (
         <Alert variant="destructive" className="mb-6">
           <AlertDescription>
-            {error instanceof Error ? error.message : "An error occurred"}
+            {error instanceof Error ? error.message : 'An error occurred'}
           </AlertDescription>
         </Alert>
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
+            <CardTitle className="font-medium text-gray-600 text-sm">
               Total Posts
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{posts.length}</div>
+            <div className="font-bold text-2xl">{posts.length}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
+            <CardTitle className="font-medium text-gray-600 text-sm">
               Total Comments
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{comments.length}</div>
+            <div className="font-bold text-2xl">{comments.length}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
+            <CardTitle className="font-medium text-gray-600 text-sm">
               Active Users
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="font-bold text-2xl">
               {new Set(posts.map((p) => p.authorId)).size}
             </div>
           </CardContent>
@@ -170,14 +124,14 @@ export default function AdminPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
+      <div className="mb-6 border-gray-200 border-b">
         <nav className="-mb-px flex space-x-8">
           <button
-            onClick={() => setActiveTab("posts")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "posts"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            onClick={() => setActiveTab('posts')}
+            className={`border-b-2 px-1 py-2 font-medium text-sm ${
+              activeTab === 'posts'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
             }`}
             type="button"
           >
@@ -185,11 +139,11 @@ export default function AdminPage() {
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab("comments")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "comments"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            onClick={() => setActiveTab('comments')}
+            className={`border-b-2 px-1 py-2 font-medium text-sm ${
+              activeTab === 'comments'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
             }`}
           >
             Comments ({comments.length})
@@ -198,10 +152,10 @@ export default function AdminPage() {
       </div>
 
       {/* Content */}
-      {activeTab === "posts" && (
+      {activeTab === 'posts' && (
         <div>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">Recent Posts</h2>
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="font-semibold text-xl">Recent Posts</h2>
           </div>
 
           {posts.length === 0 ? (
@@ -216,10 +170,10 @@ export default function AdminPage() {
         </div>
       )}
 
-      {activeTab === "comments" && (
+      {activeTab === 'comments' && (
         <div>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">Recent Comments</h2>
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="font-semibold text-xl">Recent Comments</h2>
           </div>
 
           <Card>
@@ -231,5 +185,5 @@ export default function AdminPage() {
         </div>
       )}
     </div>
-  );
+  )
 }

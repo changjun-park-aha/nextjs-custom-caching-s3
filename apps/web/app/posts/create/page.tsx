@@ -1,69 +1,69 @@
-"use client";
+'use client'
 
-import { useMutationCreatePost } from "@/app/_hooks/use-mutation-create-post";
-import { Alert, AlertDescription } from "@workspace/ui/components/alert";
-import { Button } from "@workspace/ui/components/button";
+import { Alert, AlertDescription } from '@workspace/ui/components/alert'
+import { Button } from '@workspace/ui/components/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card";
-import { Input } from "@workspace/ui/components/input";
-import { Label } from "@workspace/ui/components/label";
+} from '@workspace/ui/components/card'
+import { Input } from '@workspace/ui/components/input'
+import { Label } from '@workspace/ui/components/label'
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@workspace/ui/components/tabs";
-import { Textarea } from "@workspace/ui/components/textarea";
-import "highlight.js/styles/github.css";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import ReactMarkdown from "react-markdown";
-import rehypeHighlight from "rehype-highlight";
-import remarkGfm from "remark-gfm";
-import { useAuth } from "@/lib/auth-context";
+} from '@workspace/ui/components/tabs'
+import { Textarea } from '@workspace/ui/components/textarea'
+import { useMutationCreatePost } from '@/app/_hooks/use-mutation-create-post'
+import 'highlight.js/styles/github.css'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import rehypeHighlight from 'rehype-highlight'
+import remarkGfm from 'remark-gfm'
+import { useAuth } from '@/lib/auth-context'
 
 export default function CreatePostPage() {
-  const { session, status } = useAuth();
-  const router = useRouter();
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [activeTab, setActiveTab] = useState("write");
+  const { status } = useAuth()
+  const router = useRouter()
+  const [title, setTitle] = useState('')
+  const [content, setContent] = useState('')
+  const [activeTab, setActiveTab] = useState('write')
 
-  const createPostMutation = useMutationCreatePost();
+  const createPostMutation = useMutationCreatePost()
 
-  if (status === "loading") {
+  if (status === 'loading') {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <div className="container mx-auto max-w-2xl px-4 py-8">
         <div>Loading...</div>
       </div>
-    );
+    )
   }
 
-  if (status === "unauthenticated") {
-    router.push("/auth/login");
-    return null;
+  if (status === 'unauthenticated') {
+    router.push('/auth/login')
+    return null
   }
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!title.trim() || !content.trim()) {
-      return;
+      return
     }
 
     createPostMutation.mutate({
       title,
       content,
-    });
-  };
+    })
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto max-w-4xl px-4 py-8">
       <Card>
         <CardHeader>
           <CardTitle>Create New Post</CardTitle>
@@ -78,7 +78,7 @@ export default function CreatePostPage() {
                 <AlertDescription>
                   {createPostMutation.error instanceof Error
                     ? createPostMutation.error.message
-                    : "An error occurred. Please try again."}
+                    : 'An error occurred. Please try again.'}
                 </AlertDescription>
               </Alert>
             )}
@@ -97,7 +97,7 @@ export default function CreatePostPage() {
                 disabled={createPostMutation.isPending}
                 maxLength={255}
               />
-              <p className="text-sm text-gray-500">
+              <p className="text-gray-500 text-sm">
                 {title.length}/255 characters
               </p>
             </div>
@@ -147,7 +147,7 @@ console.log('Hello, world!');
                 </TabsContent>
 
                 <TabsContent value="preview" className="mt-2">
-                  <div className="border rounded-md p-3 min-h-[380px] bg-gray-50 dark:bg-gray-800 overflow-auto">
+                  <div className="min-h-[380px] overflow-auto rounded-md border bg-gray-50 p-3 dark:bg-gray-800">
                     {content ? (
                       <div className="prose dark:prose-invert max-w-none">
                         <ReactMarkdown
@@ -166,7 +166,7 @@ console.log('Hello, world!');
                 </TabsContent>
               </Tabs>
 
-              <p className="text-sm text-gray-500">
+              <p className="text-gray-500 text-sm">
                 {content.length} characters • Supports Markdown formatting
               </p>
             </div>
@@ -181,7 +181,7 @@ console.log('Hello, world!');
                 }
                 className="flex-1"
               >
-                {createPostMutation.isPending ? "Creating..." : "Create Post"}
+                {createPostMutation.isPending ? 'Creating...' : 'Create Post'}
               </Button>
 
               <Button
@@ -197,5 +197,5 @@ console.log('Hello, world!');
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

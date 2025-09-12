@@ -1,14 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
+import { and, eq, isNull } from 'drizzle-orm'
+import { type NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { db } from '../../../../lib/db'
 import { users } from '../../../../schemas/users'
-import { eq, and, isNull } from 'drizzle-orm'
-import { z } from 'zod'
 
 const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  nickname: z.string().min(1, 'Nickname is required').max(100, 'Nickname too long'),
+  nickname: z
+    .string()
+    .min(1, 'Nickname is required')
+    .max(100, 'Nickname too long'),
 })
 
 export async function POST(request: NextRequest) {
@@ -27,7 +30,7 @@ export async function POST(request: NextRequest) {
     if (existingUser.length > 0) {
       return NextResponse.json(
         { error: 'User with this email already exists' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -51,21 +54,21 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       { message: 'User created successfully', user: newUser[0] },
-      { status: 201 }
+      { status: 201 },
     )
   } catch (error) {
     console.error('Signup error:', error)
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: error.errors[0]?.message || 'Validation error' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

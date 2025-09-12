@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '../../../lib/db'
-import { votes, posts, comments, users } from '../../../schemas'
-import { eq, and, isNull } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
+import { type NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { Auth } from '../../../lib/auth'
+import { db } from '../../../lib/db'
+import { comments, posts, votes } from '../../../schemas'
 
 // Validation schemas
 const createVoteSchema = z.object({
@@ -16,8 +16,8 @@ const createVoteSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const { session, response } = await Auth.requireAuth(request)
-    
-    if (response) return response
+
+    if (response || !session) return response
 
     const body = await request.json()
     const validatedData = createVoteSchema.parse(body)
@@ -28,14 +28,21 @@ export async function POST(request: NextRequest) {
       const postExists = await db
         .select({ id: posts.id })
         .from(posts)
-        .where(and(eq(posts.id, validatedData.targetId), isNull(posts.deletedAt)))
+        .where(
+          and(eq(posts.id, validatedData.targetId), isNull(posts.deletedAt)),
+        )
         .limit(1)
       targetExists = postExists.length > 0
     } else {
       const commentExists = await db
         .select({ id: comments.id })
         .from(comments)
-        .where(and(eq(comments.id, validatedData.targetId), isNull(comments.deletedAt)))
+        .where(
+          and(
+            eq(comments.id, validatedData.targetId),
+            isNull(comments.deletedAt),
+          ),
+        )
         .limit(1)
       targetExists = commentExists.length > 0
     }
@@ -53,8 +60,8 @@ export async function POST(request: NextRequest) {
           eq(votes.userId, session.user.id),
           eq(votes.targetId, validatedData.targetId),
           eq(votes.targetType, validatedData.targetType),
-          isNull(votes.deletedAt)
-        )
+          isNull(votes.deletedAt),
+        ),
       )
       .limit(1)
 
@@ -74,9 +81,9 @@ export async function POST(request: NextRequest) {
         // Different vote type, update it
         await db
           .update(votes)
-          .set({ 
+          .set({
             voteType: validatedData.voteType,
-            updatedAt: new Date()
+            updatedAt: new Date(),
           })
           .where(eq(votes.id, existingVote[0]!.id))
 
@@ -104,15 +111,18 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Error handling vote:', error)
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: error.errors[0]?.message || 'Validation error' }, 
-        { status: 400 }
+        { error: error.errors[0]?.message || 'Validation error' },
+        { status: 400 },
       )
     }
 
-    return NextResponse.json({ error: 'Failed to handle vote' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to handle vote' },
+      { status: 500 },
+    )
   }
 }
 
@@ -126,8 +136,8 @@ async function updateVoteCounts(targetType: string, targetId: string) {
         eq(votes.targetId, targetId),
         eq(votes.targetType, targetType),
         eq(votes.voteType, 'upvote'),
-        isNull(votes.deletedAt)
-      )
+        isNull(votes.deletedAt),
+      ),
     )
 
   const downvoteCount = await db
@@ -138,8 +148,8 @@ async function updateVoteCounts(targetType: string, targetId: string) {
         eq(votes.targetId, targetId),
         eq(votes.targetType, targetType),
         eq(votes.voteType, 'downvote'),
-        isNull(votes.deletedAt)
-      )
+        isNull(votes.deletedAt),
+      ),
     )
 
   if (targetType === 'post') {
@@ -172,7 +182,10 @@ export async function GET(request: NextRequest) {
     const targetType = searchParams.get('targetType')
 
     if (!userId || !targetId || !targetType) {
-      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Missing required parameters' },
+        { status: 400 },
+      )
     }
 
     const userVote = await db
@@ -183,8 +196,8 @@ export async function GET(request: NextRequest) {
           eq(votes.userId, userId),
           eq(votes.targetId, targetId),
           eq(votes.targetType, targetType),
-          isNull(votes.deletedAt)
-        )
+          isNull(votes.deletedAt),
+        ),
       )
       .limit(1)
 

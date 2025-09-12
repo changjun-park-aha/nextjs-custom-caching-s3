@@ -1,93 +1,93 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { useAuth } from "../../lib/auth-context";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Button } from "@workspace/ui/components/button";
-import { Input } from "@workspace/ui/components/input";
+import { Alert, AlertDescription } from '@workspace/ui/components/alert'
+import { Button } from '@workspace/ui/components/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card";
-import { Label } from "@workspace/ui/components/label";
-import { Alert, AlertDescription } from "@workspace/ui/components/alert";
-import { User, Lock, Shield } from "lucide-react";
+} from '@workspace/ui/components/card'
+import { Input } from '@workspace/ui/components/input'
+import { Label } from '@workspace/ui/components/label'
+import { Lock, Shield, User } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { useAuth } from '../../lib/auth-context'
 
 export default function SettingsPage() {
-  const { session, status, refresh } = useAuth();
-  const router = useRouter();
-  const [nickname, setNickname] = useState(session?.user?.nickname || "");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const { session, status, refresh } = useAuth()
+  const router = useRouter()
+  const [nickname, setNickname] = useState(session?.user?.nickname || '')
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
-  if (status === "loading") {
+  if (status === 'loading') {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <div className="container mx-auto max-w-2xl px-4 py-8">
         <div>Loading...</div>
       </div>
-    );
+    )
   }
 
-  if (status === "unauthenticated") {
-    router.push("/auth/login");
-    return null;
+  if (status === 'unauthenticated') {
+    router.push('/auth/login')
+    return null
   }
 
   const handleNicknameUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    setIsLoading(true);
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+    setIsLoading(true)
 
     if (!nickname.trim()) {
-      setError("Nickname cannot be empty");
-      setIsLoading(false);
-      return;
+      setError('Nickname cannot be empty')
+      setIsLoading(false)
+      return
     }
 
     if (nickname.length > 100) {
-      setError("Nickname must be less than 100 characters");
-      setIsLoading(false);
-      return;
+      setError('Nickname must be less than 100 characters')
+      setIsLoading(false)
+      return
     }
 
     try {
-      const response = await fetch("/api/user/update-nickname", {
-        method: "POST",
+      const response = await fetch('/api/user/update-nickname', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           nickname: nickname.trim(),
         }),
-      });
+      })
 
       if (response.ok) {
-        setSuccess("Nickname updated successfully");
+        setSuccess('Nickname updated successfully')
         // Update the session
-        await refresh();
+        await refresh()
       } else {
-        const data = await response.json();
-        setError(data.error || "Failed to update nickname");
+        const data = await response.json()
+        setError(data.error || 'Failed to update nickname')
       }
-    } catch (error) {
-      setError("An error occurred. Please try again.");
+    } catch {
+      setError('An error occurred. Please try again.')
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
+    <div className="container mx-auto max-w-2xl px-4 py-8">
       <div className="space-y-6">
         {/* Page Header */}
         <div>
-          <h1 className="text-2xl font-bold mb-2">Account Settings</h1>
+          <h1 className="mb-2 font-bold text-2xl">Account Settings</h1>
           <p className="text-gray-600">
             Manage your account preferences and security settings.
           </p>
@@ -123,11 +123,11 @@ export default function SettingsPage() {
                 <Input
                   id="email"
                   type="email"
-                  value={session?.user?.email || ""}
+                  value={session?.user?.email || ''}
                   disabled
                   className="bg-gray-50 dark:bg-gray-800"
                 />
-                <p className="text-xs text-gray-500">
+                <p className="text-gray-500 text-xs">
                   Email address cannot be changed
                 </p>
               </div>
@@ -145,7 +145,7 @@ export default function SettingsPage() {
                   disabled={isLoading}
                   maxLength={100}
                 />
-                <p className="text-xs text-gray-500">
+                <p className="text-gray-500 text-xs">
                   This is how your name will appear to other users (
                   {nickname.length}/100)
                 </p>
@@ -157,7 +157,7 @@ export default function SettingsPage() {
                   isLoading || nickname.trim() === session?.user?.nickname
                 }
               >
-                {isLoading ? "Updating..." : "Update Profile"}
+                {isLoading ? 'Updating...' : 'Update Profile'}
               </Button>
             </form>
           </CardContent>
@@ -179,7 +179,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-medium">Password</h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-gray-600 text-sm">
                     Change your account password
                   </p>
                 </div>
@@ -201,16 +201,16 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Account Type:</span>
-                <span className="text-sm font-medium">
-                  {session?.user?.isAdmin ? "Administrator" : "Regular User"}
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 text-sm">Account Type:</span>
+                <span className="font-medium text-sm">
+                  {session?.user?.isAdmin ? 'Administrator' : 'Regular User'}
                 </span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Member Since:</span>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 text-sm">Member Since:</span>
                 <span className="text-sm">
-                  {new Date().toLocaleDateString()}{" "}
+                  {new Date().toLocaleDateString()}{' '}
                   {/* This would come from user creation date */}
                 </span>
               </div>
@@ -243,5 +243,5 @@ export default function SettingsPage() {
         )}
       </div>
     </div>
-  );
+  )
 }

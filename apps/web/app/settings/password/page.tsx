@@ -1,87 +1,87 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { useAuth } from "@/lib/auth-context";
-import { useRouter } from "next/navigation";
-import { Button } from "@workspace/ui/components/button";
-import { Input } from "@workspace/ui/components/input";
+import { Alert, AlertDescription } from '@workspace/ui/components/alert'
+import { Button } from '@workspace/ui/components/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card";
-import { Label } from "@workspace/ui/components/label";
-import { Alert, AlertDescription } from "@workspace/ui/components/alert";
+} from '@workspace/ui/components/card'
+import { Input } from '@workspace/ui/components/input'
+import { Label } from '@workspace/ui/components/label'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { useAuth } from '@/lib/auth-context'
 
 export default function ChangePasswordPage() {
-  const { session, status } = useAuth();
-  const router = useRouter();
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const { status } = useAuth()
+  const router = useRouter()
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
-  if (status === "loading") {
-    return <div>Loading...</div>;
+  if (status === 'loading') {
+    return <div>Loading...</div>
   }
 
-  if (status === "unauthenticated") {
-    router.push("/auth/login");
-    return null;
+  if (status === 'unauthenticated') {
+    router.push('/auth/login')
+    return null
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    setIsLoading(true);
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+    setIsLoading(true)
 
     if (newPassword !== confirmPassword) {
-      setError("New passwords do not match");
-      setIsLoading(false);
-      return;
+      setError('New passwords do not match')
+      setIsLoading(false)
+      return
     }
 
     if (newPassword.length < 6) {
-      setError("New password must be at least 6 characters long");
-      setIsLoading(false);
-      return;
+      setError('New password must be at least 6 characters long')
+      setIsLoading(false)
+      return
     }
 
     try {
-      const response = await fetch("/api/auth/change-password", {
-        method: "POST",
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           currentPassword,
           newPassword,
         }),
-      });
+      })
 
       if (response.ok) {
-        setSuccess("Password changed successfully");
-        setCurrentPassword("");
-        setNewPassword("");
-        setConfirmPassword("");
+        setSuccess('Password changed successfully')
+        setCurrentPassword('')
+        setNewPassword('')
+        setConfirmPassword('')
       } else {
-        const data = await response.json();
-        setError(data.error || "Failed to change password");
+        const data = await response.json()
+        setError(data.error || 'Failed to change password')
       }
-    } catch (error) {
-      setError("An error occurred. Please try again.");
+    } catch {
+      setError('An error occurred. Please try again.')
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
+    <div className="container mx-auto max-w-2xl px-4 py-8">
       <Card>
         <CardHeader>
           <CardTitle>Change Password</CardTitle>
@@ -151,11 +151,11 @@ export default function ChangePasswordPage() {
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Updating password..." : "Update Password"}
+              {isLoading ? 'Updating password...' : 'Update Password'}
             </Button>
           </form>
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

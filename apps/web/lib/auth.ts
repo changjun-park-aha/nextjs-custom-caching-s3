@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+/** biome-ignore-all lint/complexity/noStaticOnlyClass: 클래스 쓰지 말라고 그렇게 말해도 알아처먹질못하는 AI문제 */
 import bcrypt from 'bcryptjs'
-import { db } from './db'
-import { users } from '../schemas/users'
-import { eq, and, isNull } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
+import { cookies } from 'next/headers'
+import { type NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { JWT, type JWTPayload } from './jwt'
+import { users } from '../schemas/users'
+import { db } from './db'
+import { JWT } from './jwt'
 
 const TOKEN_COOKIE_NAME = 'auth-token'
 
@@ -51,7 +52,7 @@ export class Auth {
           email: payload.email,
           nickname: payload.nickname,
           isAdmin: payload.isAdmin,
-        }
+        },
       }
     } catch (error) {
       console.error('Session error:', error)
@@ -60,7 +61,10 @@ export class Auth {
   }
 
   // Login user
-  static async login(email: string, password: string): Promise<{ user: User; token: string } | null> {
+  static async login(
+    email: string,
+    password: string,
+  ): Promise<{ user: User; token: string } | null> {
     try {
       const validation = loginSchema.safeParse({ email, password })
       if (!validation.success) return null
@@ -121,26 +125,36 @@ export class Auth {
   }
 
   // Require authentication (for API routes)
-  static async requireAuth(request: NextRequest): Promise<{ session: Session; response?: NextResponse }> {
+  static async requireAuth(
+    request: NextRequest,
+  ): Promise<{ session: Session | null; response?: NextResponse }> {
     const session = await Auth.getSession(request)
-    
+
     if (!session) {
-      const response = NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      return { session: session as any, response }
+      const response = NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 },
+      )
+      return { session: null, response }
     }
 
     return { session }
   }
 
   // Require admin (for API routes)
-  static async requireAdmin(request: NextRequest): Promise<{ session: Session; response?: NextResponse }> {
+  static async requireAdmin(
+    request: NextRequest,
+  ): Promise<{ session: Session | null; response?: NextResponse }> {
     const { session, response } = await Auth.requireAuth(request)
-    
-    if (response) return { session, response }
-    
-    if (!session.user.isAdmin) {
-      const forbiddenResponse = NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-      return { session, response: forbiddenResponse }
+
+    if (response && session) return { session, response }
+
+    if (!session?.user.isAdmin) {
+      const forbiddenResponse = NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 },
+      )
+      return { session: null, response: forbiddenResponse }
     }
 
     return { session }
@@ -148,6 +162,7 @@ export class Auth {
 }
 
 // Helper function for server components
+// biome-ignore lint/suspicious/useAwait: 구현 필요
 export async function getServerSession(): Promise<Session | null> {
   return Auth.getSession()
 }

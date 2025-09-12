@@ -1,58 +1,58 @@
-"use client";
+'use client'
 
-import { useQueryComments } from "@/app/_hooks/use-query-comments";
-import { useQueryPost } from "@/app/_hooks/use-query-post";
-import { Alert, AlertDescription } from "@workspace/ui/components/alert";
-import { Card, CardContent } from "@workspace/ui/components/card";
-import "highlight.js/styles/github.css";
-import { useParams } from "next/navigation";
-import { CommentItem } from "./comment-item";
-import { CommentSubmitForm } from "./comment-submit-form";
-import { PostItem } from "./post-item";
+import { Alert, AlertDescription } from '@workspace/ui/components/alert'
+import { Card, CardContent } from '@workspace/ui/components/card'
+import { useQueryComments } from '@/app/_hooks/use-query-comments'
+import { useQueryPost } from '@/app/_hooks/use-query-post'
+import 'highlight.js/styles/github.css'
+import { useParams } from 'next/navigation'
+import { CommentItem } from './comment-item'
+import { CommentSubmitForm } from './comment-submit-form'
+import { PostItem } from './post-item'
 
 export default function PostPage() {
-  const params = useParams();
-  const postId = params.id as string;
+  const params = useParams()
+  const postId = params.id as string
 
   // React Query hooks
   const {
     data: post,
     isLoading: postLoading,
     error: postError,
-  } = useQueryPost(postId);
+  } = useQueryPost(postId)
   const {
     data: comments = [],
     isLoading: commentsLoading,
     error: commentsError,
-  } = useQueryComments(postId);
+  } = useQueryComments(postId)
 
-  const loading = postLoading || commentsLoading;
-  const error = postError || commentsError;
+  const loading = postLoading || commentsLoading
+  const error = postError || commentsError
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto max-w-4xl px-4 py-8">
         <div>Loading...</div>
       </div>
-    );
+    )
   }
 
   if (!post) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto max-w-4xl px-4 py-8">
         <div>Post not found</div>
       </div>
-    );
+    )
   }
 
-  const topLevelComments = comments.filter((c) => !c.parentId);
+  const topLevelComments = comments.filter((c) => !c.parentId)
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto max-w-4xl px-4 py-8">
       {error && (
         <Alert variant="destructive" className="mb-6">
           <AlertDescription>
-            {error instanceof Error ? error.message : "An error occurred"}
+            {error instanceof Error ? error.message : 'An error occurred'}
           </AlertDescription>
         </Alert>
       )}
@@ -65,7 +65,7 @@ export default function PostPage() {
 
       {/* Comments */}
       <div className="space-y-0">
-        <h2 className="text-xl font-bold mb-6">
+        <h2 className="mb-6 font-bold text-xl">
           Comments ({topLevelComments.length})
         </h2>
 
@@ -82,5 +82,5 @@ export default function PostPage() {
         )}
       </div>
     </div>
-  );
+  )
 }

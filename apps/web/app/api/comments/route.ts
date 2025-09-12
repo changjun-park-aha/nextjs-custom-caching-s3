@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '../../../lib/db'
-import { comments, users, posts } from '../../../schemas'
-import { eq, and, isNull, desc } from 'drizzle-orm'
+import { and, desc, eq, isNull } from 'drizzle-orm'
+import { type NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { Auth } from '../../../lib/auth'
+import { db } from '../../../lib/db'
+import { comments, posts, users } from '../../../schemas'
 
 // Validation schemas
 const createCommentSchema = z.object({
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const postId = searchParams.get('postId')
-    
+
     if (!postId) {
       return NextResponse.json({ error: 'postId is required' }, { status: 400 })
     }
@@ -40,14 +40,20 @@ export async function GET(request: NextRequest) {
         },
       })
       .from(comments)
-      .leftJoin(users, and(eq(comments.authorId, users.id), isNull(users.deletedAt)))
+      .leftJoin(
+        users,
+        and(eq(comments.authorId, users.id), isNull(users.deletedAt)),
+      )
       .where(and(eq(comments.postId, postId), isNull(comments.deletedAt)))
       .orderBy(desc(comments.createdAt))
 
     return NextResponse.json(postComments)
   } catch (error) {
     console.error('Error fetching comments:', error)
-    return NextResponse.json({ error: 'Failed to fetch comments' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to fetch comments' },
+      { status: 500 },
+    )
   }
 }
 
@@ -55,8 +61,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const { session, response } = await Auth.requireAuth(request)
-    
-    if (response) return response
+
+    if (response || !session) return response
 
     const body = await request.json()
     const validatedData = createCommentSchema.parse(body)
@@ -77,11 +83,19 @@ export async function POST(request: NextRequest) {
       const parentExists = await db
         .select({ id: comments.id })
         .from(comments)
-        .where(and(eq(comments.id, validatedData.parentId), isNull(comments.deletedAt)))
+        .where(
+          and(
+            eq(comments.id, validatedData.parentId),
+            isNull(comments.deletedAt),
+          ),
+        )
         .limit(1)
 
       if (parentExists.length === 0) {
-        return NextResponse.json({ error: 'Parent comment not found' }, { status: 404 })
+        return NextResponse.json(
+          { error: 'Parent comment not found' },
+          { status: 404 },
+        )
       }
     }
 
@@ -99,14 +113,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(newComment[0], { status: 201 })
   } catch (error) {
     console.error('Error creating comment:', error)
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: error.errors[0]?.message || 'Validation error' }, 
-        { status: 400 }
+        { error: error.errors[0]?.message || 'Validation error' },
+        { status: 400 },
       )
     }
 
-    return NextResponse.json({ error: 'Failed to create comment' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to create comment' },
+      { status: 500 },
+    )
   }
 }

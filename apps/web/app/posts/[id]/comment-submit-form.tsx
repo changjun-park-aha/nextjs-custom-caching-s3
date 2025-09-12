@@ -1,36 +1,36 @@
-"use client";
+'use client'
 
-import { useMutationCreateComment } from "@/app/_hooks/use-mutation-create-comment";
-import { useAuth } from "@/lib/auth-context";
-import { Post } from "@/schemas/posts";
-import { Button } from "@workspace/ui/components/button";
-import { Card, CardContent } from "@workspace/ui/components/card";
+import { Button } from '@workspace/ui/components/button'
+import { Card, CardContent } from '@workspace/ui/components/card'
 import {
   Tabs,
+  TabsContent,
   TabsList,
   TabsTrigger,
-  TabsContent,
-} from "@workspace/ui/components/tabs";
-import { Textarea } from "@workspace/ui/components/textarea";
-import { MessageCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import ReactMarkdown from "react-markdown";
-import rehypeHighlight from "rehype-highlight";
-import remarkGfm from "remark-gfm";
+} from '@workspace/ui/components/tabs'
+import { Textarea } from '@workspace/ui/components/textarea'
+import { MessageCircle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import rehypeHighlight from 'rehype-highlight'
+import remarkGfm from 'remark-gfm'
+import { useMutationCreateComment } from '@/app/_hooks/use-mutation-create-comment'
+import { useAuth } from '@/lib/auth-context'
+import type { Post } from '@/schemas/posts'
 
 interface CommentSubmitFormProps {
-  postId: Post["id"];
+  postId: Post['id']
 }
 
 export function CommentSubmitForm({ postId }: CommentSubmitFormProps) {
-  const { session } = useAuth();
-  const user = session?.user;
-  const router = useRouter();
+  const { session } = useAuth()
+  const user = session?.user
+  const router = useRouter()
 
   const handleCommentSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !newComment.trim()) return;
+    e.preventDefault()
+    if (!user || !newComment.trim()) return
 
     createCommentMutation.mutate(
       {
@@ -40,26 +40,26 @@ export function CommentSubmitForm({ postId }: CommentSubmitFormProps) {
       },
       {
         onSuccess: () => {
-          setNewComment("");
+          setNewComment('')
         },
-      }
-    );
-  };
+      },
+    )
+  }
 
-  const createCommentMutation = useMutationCreateComment();
+  const createCommentMutation = useMutationCreateComment()
 
-  const [newComment, setNewComment] = useState<string>("");
-  const [commentTab, setCommentTab] = useState<string>("write");
+  const [newComment, setNewComment] = useState<string>('')
+  const [commentTab, setCommentTab] = useState<string>('write')
 
   if (!user) {
     return (
       <Card className="mb-8">
         <CardContent className="pt-6 text-center">
-          <p className="text-gray-600 mb-4">Please sign in to comment</p>
-          <Button onClick={() => router.push("/auth/login")}>Sign In</Button>
+          <p className="mb-4 text-gray-600">Please sign in to comment</p>
+          <Button onClick={() => router.push('/auth/login')}>Sign In</Button>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   return (
@@ -87,7 +87,7 @@ export function CommentSubmitForm({ postId }: CommentSubmitFormProps) {
             </TabsContent>
 
             <TabsContent value="preview" className="mt-2">
-              <div className="border rounded-md p-3 min-h-[100px] bg-gray-50 dark:bg-gray-800 overflow-auto">
+              <div className="min-h-[100px] overflow-auto rounded-md border bg-gray-50 p-3 dark:bg-gray-800">
                 {newComment ? (
                   <div className="prose dark:prose-invert prose-sm max-w-none">
                     <ReactMarkdown
@@ -111,12 +111,12 @@ export function CommentSubmitForm({ postId }: CommentSubmitFormProps) {
               type="submit"
               disabled={createCommentMutation.isPending || !newComment.trim()}
             >
-              <MessageCircle className="h-4 w-4 mr-2" />
-              {createCommentMutation.isPending ? "Posting..." : "Post Comment"}
+              <MessageCircle className="mr-2 h-4 w-4" />
+              {createCommentMutation.isPending ? 'Posting...' : 'Post Comment'}
             </Button>
           </div>
         </form>
       </CardContent>
     </Card>
-  );
+  )
 }

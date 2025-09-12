@@ -1,19 +1,19 @@
-'use client';
+'use client'
 
-import type { User } from '@/schemas/users';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query'
+import type { User } from '@/schemas/users'
 
 export function useQueryUser(userId: string) {
   return useQuery({
-    queryKey: ["user", userId],
+    queryKey: ['user', userId],
     queryFn: async (): Promise<User> => {
-      const response = await fetch(`/api/user/${userId}`);
+      const response = await fetch(`/api/user/${userId}`)
       if (!response.ok) {
-        throw new Error("User not found");
+        throw new Error('User not found')
       }
-      return response.json();
+      return response.json()
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     enabled: !!userId,
-  }); 
+  })
 }

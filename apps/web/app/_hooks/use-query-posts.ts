@@ -1,18 +1,18 @@
-'use client';
+'use client'
 
-import type { Post } from '@/schemas/posts';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query'
+import type { Post } from '@/schemas/posts'
 
 export function useQueryPosts() {
   return useQuery({
-    queryKey: ["posts"],
+    queryKey: ['posts'],
     queryFn: async (): Promise<Post[]> => {
-      const response = await fetch("/api/posts");
+      const response = await fetch('/api/posts')
       if (!response.ok) {
-        throw new Error("Failed to load posts");
+        throw new Error('Failed to load posts')
       }
-      return response.json();
+      return response.json()
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  })
 }

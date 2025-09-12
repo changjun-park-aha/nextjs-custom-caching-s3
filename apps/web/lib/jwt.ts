@@ -1,7 +1,7 @@
-import { SignJWT, jwtVerify } from 'jose'
+import { jwtVerify, SignJWT } from 'jose'
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
+  process.env.JWT_SECRET || 'your-secret-key-change-this-in-production',
 )
 
 export interface JWTPayload {
@@ -13,6 +13,7 @@ export interface JWTPayload {
   exp?: number
 }
 
+// biome-ignore lint/complexity/noStaticOnlyClass: 굳이 꾸역꾸역 class를 쳐 써대는 AI문제
 export class JWT {
   static async sign(payload: Omit<JWTPayload, 'iat' | 'exp'>): Promise<string> {
     const jwt = await new SignJWT(payload)
@@ -20,14 +21,14 @@ export class JWT {
       .setIssuedAt()
       .setExpirationTime('24h')
       .sign(JWT_SECRET)
-    
+
     return jwt
   }
 
   static async verify(token: string): Promise<JWTPayload | null> {
     try {
       const { payload } = await jwtVerify(token, JWT_SECRET)
-      
+
       // Validate payload structure
       if (
         typeof payload.id === 'string' &&
@@ -44,7 +45,7 @@ export class JWT {
           exp: payload.exp,
         }
       }
-      
+
       return null
     } catch (error) {
       console.error('JWT verification failed:', error)
@@ -53,7 +54,7 @@ export class JWT {
   }
 
   static async refresh(token: string): Promise<string | null> {
-    const payload = await this.verify(token)
+    const payload = await JWT.verify(token)
     if (!payload) return null
 
     // Create new token with fresh expiration
@@ -64,6 +65,6 @@ export class JWT {
       isAdmin: payload.isAdmin,
     }
 
-    return this.sign(newPayload)
+    return JWT.sign(newPayload)
   }
 }

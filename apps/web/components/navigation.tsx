@@ -1,23 +1,23 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { useAuth } from "../lib/auth-context";
-import { Button } from "@workspace/ui/components/button";
+import { Button } from '@workspace/ui/components/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu";
-import { User, Settings, LogOut, Plus, Home } from "lucide-react";
+} from '@workspace/ui/components/dropdown-menu'
+import { Home, LogOut, Plus, Settings, User } from 'lucide-react'
+import Link from 'next/link'
+import { useAuth } from '../lib/auth-context'
 
 export function Navigation() {
-  const { session, status, logout } = useAuth();
+  const { session, status, logout } = useAuth()
 
   const handleSignOut = async () => {
-    await logout();
-  };
+    await logout()
+  }
 
   return (
     <nav className="border-b bg-background">
@@ -27,12 +27,12 @@ export function Navigation() {
           <div className="flex items-center space-x-4">
             <Link href="/" className="flex items-center space-x-2">
               <Home className="h-6 w-6" />
-              <span className="text-xl font-bold">Forum</span>
+              <span className="font-bold text-xl">Forum</span>
             </Link>
           </div>
 
           {/* Main Navigation */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden items-center space-x-4 md:flex">
             <Link href="/">
               <Button variant="ghost">Posts</Button>
             </Link>
@@ -48,7 +48,7 @@ export function Navigation() {
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
-            {status === "loading" ? (
+            {status === 'loading' ? (
               <div>Loading...</div>
             ) : session ? (
               <DropdownMenu>
@@ -118,5 +118,5 @@ export function Navigation() {
         </div>
       </div>
     </nav>
-  );
+  )
 }

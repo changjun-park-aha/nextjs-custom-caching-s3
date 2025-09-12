@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '../../../../lib/db'
-import { comments, users } from '../../../../schemas'
-import { eq, and, isNull } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
+import { type NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { Auth } from '../../../../lib/auth'
+import { db } from '../../../../lib/db'
+import { comments, users } from '../../../../schemas'
 
 // Validation schema for updates
 const updateCommentSchema = z.object({
@@ -12,12 +12,12 @@ const updateCommentSchema = z.object({
 
 // GET /api/comments/[id] - Get single comment
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params
-    
+
     const comment = await db
       .select({
         id: comments.id,
@@ -35,7 +35,10 @@ export async function GET(
         },
       })
       .from(comments)
-      .leftJoin(users, and(eq(comments.authorId, users.id), isNull(users.deletedAt)))
+      .leftJoin(
+        users,
+        and(eq(comments.authorId, users.id), isNull(users.deletedAt)),
+      )
       .where(and(eq(comments.id, id), isNull(comments.deletedAt)))
       .limit(1)
 
@@ -46,19 +49,22 @@ export async function GET(
     return NextResponse.json(comment[0])
   } catch (error) {
     console.error('Error fetching comment:', error)
-    return NextResponse.json({ error: 'Failed to fetch comment' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to fetch comment' },
+      { status: 500 },
+    )
   }
 }
 
 // PUT /api/comments/[id] - Update comment (authenticated, author only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { session, response } = await Auth.requireAuth(request)
-    
-    if (response) return response
+
+    if (response || !session) return response
 
     const { id } = await params
     const body = await request.json()
@@ -75,7 +81,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 })
     }
 
-    if (existingComment[0]!.authorId !== session.user.id && !session.user.isAdmin) {
+    if (
+      existingComment[0]!.authorId !== session.user.id &&
+      !session.user.isAdmin
+    ) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -91,27 +100,30 @@ export async function PUT(
     return NextResponse.json(updatedComment[0])
   } catch (error) {
     console.error('Error updating comment:', error)
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: error.errors[0]?.message || 'Validation error' }, 
-        { status: 400 }
+        { error: error.errors[0]?.message || 'Validation error' },
+        { status: 400 },
       )
     }
 
-    return NextResponse.json({ error: 'Failed to update comment' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to update comment' },
+      { status: 500 },
+    )
   }
 }
 
 // DELETE /api/comments/[id] - Soft delete comment (authenticated, author or admin)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { session, response } = await Auth.requireAuth(request)
-    
-    if (response) return response
+
+    if (response || !session) return response
 
     const { id } = await params
 
@@ -126,7 +138,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 })
     }
 
-    if (existingComment[0]!.authorId !== session.user.id && !session.user.isAdmin) {
+    if (
+      existingComment[0]!.authorId !== session.user.id &&
+      !session.user.isAdmin
+    ) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -140,6 +155,9 @@ export async function DELETE(
     return NextResponse.json({ message: 'Comment deleted successfully' })
   } catch (error) {
     console.error('Error deleting comment:', error)
-    return NextResponse.json({ error: 'Failed to delete comment' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to delete comment' },
+      { status: 500 },
+    )
   }
 }

@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '../../../../lib/db'
-import { users } from '../../../../schemas/users'
-import { eq, and, isNull } from 'drizzle-orm'
+import bcrypt from 'bcryptjs'
+import { and, eq, isNull } from 'drizzle-orm'
+import { type NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { Auth } from '../../../../lib/auth'
-import bcrypt from 'bcryptjs'
+import { db } from '../../../../lib/db'
+import { users } from '../../../../schemas/users'
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
@@ -14,8 +14,8 @@ const changePasswordSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const { session, response } = await Auth.requireAuth(request)
-    
-    if (response) return response
+
+    if (response || !session) return response
 
     const body = await request.json()
     const validatedData = changePasswordSchema.parse(body)
@@ -34,11 +34,14 @@ export async function POST(request: NextRequest) {
     // Verify current password
     const isCurrentPasswordValid = await bcrypt.compare(
       validatedData.currentPassword,
-      user[0]!.password
+      user[0]!.password,
     )
 
     if (!isCurrentPasswordValid) {
-      return NextResponse.json({ error: 'Current password is incorrect' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Current password is incorrect' },
+        { status: 400 },
+      )
     }
 
     // Hash new password
@@ -56,14 +59,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Password updated successfully' })
   } catch (error) {
     console.error('Error changing password:', error)
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: error.errors[0]?.message || 'Validation error' }, 
-        { status: 400 }
+        { error: error.errors[0]?.message || 'Validation error' },
+        { status: 400 },
       )
     }
 
-    return NextResponse.json({ error: 'Failed to change password' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to change password' },
+      { status: 500 },
+    )
   }
 }

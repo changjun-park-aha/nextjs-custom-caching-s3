@@ -1,30 +1,30 @@
-"use client";
+'use client'
 
-import type { Post } from "@/schemas/posts";
-import { Button } from "@workspace/ui/components/button";
-import { Card, CardHeader, CardContent } from "@workspace/ui/components/card";
-import { User, Edit, Trash2 } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import rehypeHighlight from "rehype-highlight";
-import remarkGfm from "remark-gfm";
-import { VoteButtons } from "./vote-buttons";
-import { useQueryPost } from "@/app/_hooks/use-query-post";
-import { useAuth } from "@/lib/auth-context";
-import { useQueryUser } from "@/app/_hooks/use-query-user";
+import { Button } from '@workspace/ui/components/button'
+import { Card, CardContent, CardHeader } from '@workspace/ui/components/card'
+import { Edit, Trash2, User } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import rehypeHighlight from 'rehype-highlight'
+import remarkGfm from 'remark-gfm'
+import { useQueryPost } from '@/app/_hooks/use-query-post'
+import { useQueryUser } from '@/app/_hooks/use-query-user'
+import { useAuth } from '@/lib/auth-context'
+import type { Post } from '@/schemas/posts'
+import { VoteButtons } from './vote-buttons'
 
 interface PostItemProps {
-  postId: Post["id"];
+  postId: Post['id']
 }
 
 export function PostItem({ postId }: PostItemProps) {
-  const { session } = useAuth();
-  const user = session?.user;
+  const { session } = useAuth()
+  const user = session?.user
 
-  const { data: post } = useQueryPost(postId);
-  const { data: author } = useQueryUser(post?.authorId || "");
+  const { data: post } = useQueryPost(postId)
+  const { data: author } = useQueryUser(post?.authorId || '')
 
   if (!post) {
-    return null;
+    return null
   }
 
   return (
@@ -39,8 +39,8 @@ export function PostItem({ postId }: PostItemProps) {
           />
 
           <div className="flex-1">
-            <h1 className="text-2xl font-bold mb-2">{post.title}</h1>
-            <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
+            <h1 className="mb-2 font-bold text-2xl">{post.title}</h1>
+            <div className="mb-4 flex items-center space-x-2 text-gray-600 text-sm">
               <User className="h-4 w-4" />
               <span className="font-medium">{author?.nickname}</span>
               <span>•</span>
@@ -49,11 +49,11 @@ export function PostItem({ postId }: PostItemProps) {
                 <>
                   <span>•</span>
                   <Button variant="ghost" size="sm">
-                    <Edit className="h-4 w-4 mr-2" />
+                    <Edit className="mr-2 h-4 w-4" />
                     Edit
                   </Button>
                   <Button variant="ghost" size="sm" className="text-red-600">
-                    <Trash2 className="h-4 w-4 mr-2" />
+                    <Trash2 className="mr-2 h-4 w-4" />
                     Delete
                   </Button>
                 </>
@@ -73,5 +73,5 @@ export function PostItem({ postId }: PostItemProps) {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }

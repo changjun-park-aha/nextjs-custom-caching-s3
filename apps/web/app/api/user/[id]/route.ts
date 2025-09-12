@@ -1,9 +1,12 @@
-import { db } from '@/lib/db'
-import { users } from '@/schemas'
 import { and, eq, isNull } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
+import { db } from '@/lib/db'
+import { users } from '@/schemas'
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     const { id } = await params
     const user = await db
