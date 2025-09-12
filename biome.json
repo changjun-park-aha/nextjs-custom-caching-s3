@@ -169,7 +169,7 @@
         "noUnsafeDeclarationMerging": "error",
         "noUnsafeNegation": "error",
         "noWith": "error",
-        "useAwait": "warn",
+        "useAwait": "off",
         "useGetterReturn": "error",
         "useNamespaceKeyword": "error"
       }

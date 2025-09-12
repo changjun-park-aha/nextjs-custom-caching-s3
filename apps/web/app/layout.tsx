@@ -1,8 +1,8 @@
 import { Geist, Geist_Mono } from 'next/font/google'
-
 import '@workspace/ui/globals.css'
-import { Navigation } from '../components/navigation'
-import { Providers } from '../components/providers'
+import type { Metadata } from 'next'
+import { Navigation } from '../components/nav/navigation'
+import { Providers } from './providers'
 
 const fontSans = Geist({
   subsets: ['latin'],
@@ -13,6 +13,17 @@ const fontMono = Geist_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
 })
+
+export const metadata: Metadata = {
+  title: { default: '아하 DEV', template: '%s | 아하 DEV' },
+  metadataBase: new URL('https://a-ha-dev.com'),
+  openGraph: {
+    title: '아하 DEV',
+    description: '아하 개발용 커뮤니티',
+    images: [`/api/og?title=아하 DEV`],
+  },
+  twitter: { card: 'summary_large_image' },
+}
 
 export default function RootLayout({
   children,
