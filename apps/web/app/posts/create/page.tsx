@@ -1,11 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useAuth } from "../../../lib/auth-context";
-import { useRouter } from "next/navigation";
+import { useMutationCreatePost } from "@/app/_hooks/use-mutation-create-post";
+import { Alert, AlertDescription } from "@workspace/ui/components/alert";
 import { Button } from "@workspace/ui/components/button";
-import { Input } from "@workspace/ui/components/input";
-import { Textarea } from "@workspace/ui/components/textarea";
 import {
   Card,
   CardContent,
@@ -13,27 +10,31 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
+import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
-import { Alert, AlertDescription } from "@workspace/ui/components/alert";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@workspace/ui/components/tabs";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeHighlight from "rehype-highlight";
+import { Textarea } from "@workspace/ui/components/textarea";
 import "highlight.js/styles/github.css";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import rehypeHighlight from "rehype-highlight";
+import remarkGfm from "remark-gfm";
+import { useAuth } from "@/lib/auth-context";
 
 export default function CreatePostPage() {
   const { session, status } = useAuth();
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("write");
+
+  const createPostMutation = useMutationCreatePost();
 
   if (status === "loading") {
     return (
@@ -48,41 +49,17 @@ export default function CreatePostPage() {
     return null;
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setIsLoading(true);
 
     if (!title.trim() || !content.trim()) {
-      setError("Title and content are required");
-      setIsLoading(false);
       return;
     }
 
-    try {
-      const response = await fetch("/api/posts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: title.trim(),
-          content: content.trim(),
-        }),
-      });
-
-      if (response.ok) {
-        const newPost = await response.json();
-        router.push(`/posts/${newPost.id}`);
-      } else {
-        const data = await response.json();
-        setError(data.error || "Failed to create post");
-      }
-    } catch (error) {
-      setError("An error occurred. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+    createPostMutation.mutate({
+      title,
+      content,
+    });
   };
 
   return (
@@ -96,9 +73,13 @@ export default function CreatePostPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
+            {createPostMutation.error && (
               <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>
+                  {createPostMutation.error instanceof Error
+                    ? createPostMutation.error.message
+                    : "An error occurred. Please try again."}
+                </AlertDescription>
               </Alert>
             )}
 
@@ -113,7 +94,7 @@ export default function CreatePostPage() {
                 }
                 required
                 placeholder="Enter your post title"
-                disabled={isLoading}
+                disabled={createPostMutation.isPending}
                 maxLength={255}
               />
               <p className="text-sm text-gray-500">
@@ -159,7 +140,7 @@ console.log('Hello, world!');
 ```
 
 > Blockquote"
-                    disabled={isLoading}
+                    disabled={createPostMutation.isPending}
                     rows={15}
                     className="resize-none font-mono"
                   />
@@ -193,17 +174,21 @@ console.log('Hello, world!');
             <div className="flex gap-4 pt-4">
               <Button
                 type="submit"
-                disabled={isLoading || !title.trim() || !content.trim()}
+                disabled={
+                  createPostMutation.isPending ||
+                  !title.trim() ||
+                  !content.trim()
+                }
                 className="flex-1"
               >
-                {isLoading ? "Creating..." : "Create Post"}
+                {createPostMutation.isPending ? "Creating..." : "Create Post"}
               </Button>
 
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => router.back()}
-                disabled={isLoading}
+                disabled={createPostMutation.isPending}
               >
                 Cancel
               </Button>

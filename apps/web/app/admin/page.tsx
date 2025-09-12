@@ -1,25 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useAuth } from "../../lib/auth-context";
-import { useRouter } from "next/navigation";
-import { Button } from "@workspace/ui/components/button";
+import { useQueryAdminComments } from "@/app/_hooks/use-query-admin-comments";
+import { useQueryAdminPosts } from "@/app/_hooks/use-query-admin-posts";
+import { useMutationDeleteComment } from "@/app/_hooks/use-mutation-delete-comment";
+import { useMutationDeletePost } from "@/app/_hooks/use-mutation-delete-post";
+import { useAuth } from "@/lib/auth-context";
+import { Alert, AlertDescription } from "@workspace/ui/components/alert";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card";
-import { Alert, AlertDescription } from "@workspace/ui/components/alert";
-import {
-  Trash2,
-  Eye,
-  User,
-  MessageCircle,
-  ThumbsUp,
-  ThumbsDown,
-} from "lucide-react";
+
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+import { PostRow } from "./post-row";
 
 interface Author {
   id: string;
@@ -49,86 +46,50 @@ interface Comment {
 export default function AdminPage() {
   const { session, status } = useAuth();
   const router = useRouter();
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<"posts" | "comments">("posts");
 
-  useEffect(() => {
-    if (
-      status === "unauthenticated" ||
-      (status === "authenticated" && !session?.user?.isAdmin)
-    ) {
-      router.push("/");
-      return;
-    }
+  const isAdmin = status === "authenticated" && !!session?.user?.isAdmin;
 
-    if (status === "authenticated") {
-      fetchData();
-    }
-  }, [status, session]);
+  // React Query hooks
+  const {
+    data: posts = [],
+    isLoading: postsLoading,
+    error: postsError,
+  } = useQueryAdminPosts(isAdmin);
+  const {
+    data: comments = [],
+    isLoading: commentsLoading,
+    error: commentsError,
+  } = useQueryAdminComments(isAdmin);
+  const deletePostMutation = useMutationDeletePost();
+  const deleteCommentMutation = useMutationDeleteComment();
 
-  const fetchData = async () => {
-    try {
-      const [postsResponse, commentsResponse] = await Promise.all([
-        fetch("/api/posts"),
-        fetch("/api/comments?postId=all"), // We'll need to modify the API to handle this
-      ]);
+  const loading = postsLoading || commentsLoading;
+  const error = postsError || commentsError;
 
-      if (postsResponse.ok) {
-        const postsData = await postsResponse.json();
-        setPosts(postsData);
-      }
+  // Redirect non-admin users
+  if (
+    status === "unauthenticated" ||
+    (status === "authenticated" && !session?.user?.isAdmin)
+  ) {
+    router.push("/");
+    return null;
+  }
 
-      // For now, we'll just show recent comments from all posts
-      // In a real implementation, you'd have a dedicated admin API
-      setComments([]);
-    } catch (error) {
-      setError("Failed to load data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeletePost = async (postId: string) => {
+  const handleDeletePost = (postId: string) => {
     if (!confirm("Are you sure you want to delete this post?")) {
       return;
     }
 
-    try {
-      const response = await fetch(`/api/posts/${postId}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        setPosts(posts.filter((p) => p.id !== postId));
-      } else {
-        setError("Failed to delete post");
-      }
-    } catch (error) {
-      setError("Failed to delete post");
-    }
+    deletePostMutation.mutate(postId);
   };
 
-  const handleDeleteComment = async (commentId: string) => {
+  const handleDeleteComment = (commentId: string) => {
     if (!confirm("Are you sure you want to delete this comment?")) {
       return;
     }
 
-    try {
-      const response = await fetch(`/api/comments/${commentId}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        setComments(comments.filter((c) => c.id !== commentId));
-      } else {
-        setError("Failed to delete comment");
-      }
-    } catch (error) {
-      setError("Failed to delete comment");
-    }
+    deleteCommentMutation.mutate(commentId);
   };
 
   if (status === "loading" || loading) {
@@ -154,52 +115,6 @@ export default function AdminPage() {
     );
   }
 
-  const PostRow = ({ post }: { post: Post }) => (
-    <Card className="mb-4">
-      <CardContent className="pt-4">
-        <div className="flex items-center justify-between">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-medium truncate">{post.title}</h3>
-            <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
-              <div className="flex items-center space-x-1">
-                <User className="h-4 w-4" />
-                <span>{post.author.nickname}</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <ThumbsUp className="h-4 w-4" />
-                <span>{post.upvotes}</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <ThumbsDown className="h-4 w-4" />
-                <span>{post.downvotes}</span>
-              </div>
-              <span>{new Date(post.createdAt).toLocaleDateString()}</span>
-            </div>
-          </div>
-          <div className="flex space-x-2 ml-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push(`/posts/${post.id}`)}
-            >
-              <Eye className="h-4 w-4 mr-1" />
-              View
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleDeletePost(post.id)}
-              className="text-red-600 hover:text-red-700"
-            >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Delete
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Header */}
@@ -210,7 +125,9 @@ export default function AdminPage() {
 
       {error && (
         <Alert variant="destructive" className="mb-6">
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>
+            {error instanceof Error ? error.message : "An error occurred"}
+          </AlertDescription>
         </Alert>
       )}
 
@@ -246,7 +163,7 @@ export default function AdminPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Set(posts.map((p) => p.author.id)).size}
+              {new Set(posts.map((p) => p.authorId)).size}
             </div>
           </CardContent>
         </Card>
@@ -267,6 +184,7 @@ export default function AdminPage() {
             Posts ({posts.length})
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab("comments")}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === "comments"
@@ -293,7 +211,7 @@ export default function AdminPage() {
               </CardContent>
             </Card>
           ) : (
-            posts.map((post) => <PostRow key={post.id} post={post} />)
+            posts.map((post) => <PostRow key={post.id} postId={post.id} />)
           )}
         </div>
       )}
