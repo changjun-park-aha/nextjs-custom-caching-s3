@@ -13,9 +13,8 @@ export interface JWTPayload {
   exp?: number
 }
 
-// biome-ignore lint/complexity/noStaticOnlyClass: 굳이 꾸역꾸역 class를 쳐 써대는 AI문제
-export class JWT {
-  static async sign(payload: Omit<JWTPayload, 'iat' | 'exp'>): Promise<string> {
+export const JWT = {
+  async sign(payload: Omit<JWTPayload, 'iat' | 'exp'>): Promise<string> {
     const jwt = await new SignJWT(payload)
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
@@ -23,9 +22,9 @@ export class JWT {
       .sign(JWT_SECRET)
 
     return jwt
-  }
+  },
 
-  static async verify(token: string): Promise<JWTPayload | null> {
+  async verify(token: string): Promise<JWTPayload | null> {
     try {
       const { payload } = await jwtVerify(token, JWT_SECRET)
 
@@ -51,9 +50,9 @@ export class JWT {
       console.error('JWT verification failed:', error)
       return null
     }
-  }
+  },
 
-  static async refresh(token: string): Promise<string | null> {
+  async refresh(token: string): Promise<string | null> {
     const payload = await JWT.verify(token)
     if (!payload) return null
 
@@ -66,5 +65,5 @@ export class JWT {
     }
 
     return JWT.sign(newPayload)
-  }
+  },
 }

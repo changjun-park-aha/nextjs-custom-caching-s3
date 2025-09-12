@@ -26,9 +26,9 @@ const loginSchema = z.object({
   password: z.string().min(6),
 })
 
-export class Auth {
+export const Auth = {
   // Get current session from request
-  static async getSession(request?: NextRequest): Promise<Session | null> {
+  async getSession(request?: NextRequest): Promise<Session | null> {
     try {
       let token: string | undefined
 
@@ -58,10 +58,10 @@ export class Auth {
       console.error('Session error:', error)
       return null
     }
-  }
+  },
 
   // Login user
-  static async login(
+  async login(
     email: string,
     password: string,
   ): Promise<{ user: User; token: string } | null> {
@@ -96,10 +96,10 @@ export class Auth {
       console.error('Login error:', error)
       return null
     }
-  }
+  },
 
   // Set authentication cookie
-  static setAuthCookie(response: NextResponse, token: string): void {
+  setAuthCookie(response: NextResponse, token: string): void {
     response.cookies.set({
       name: TOKEN_COOKIE_NAME,
       value: token,
@@ -109,10 +109,10 @@ export class Auth {
       maxAge: 60 * 60 * 24, // 24 hours
       path: '/',
     })
-  }
+  },
 
   // Clear authentication cookie
-  static clearAuthCookie(response: NextResponse): void {
+  clearAuthCookie(response: NextResponse): void {
     response.cookies.set({
       name: TOKEN_COOKIE_NAME,
       value: '',
@@ -122,10 +122,10 @@ export class Auth {
       maxAge: 0,
       path: '/',
     })
-  }
+  },
 
   // Require authentication (for API routes)
-  static async requireAuth(
+  async requireAuth(
     request: NextRequest,
   ): Promise<{ session: Session | null; response?: NextResponse }> {
     const session = await Auth.getSession(request)
@@ -139,10 +139,10 @@ export class Auth {
     }
 
     return { session }
-  }
+  },
 
   // Require admin (for API routes)
-  static async requireAdmin(
+  async requireAdmin(
     request: NextRequest,
   ): Promise<{ session: Session | null; response?: NextResponse }> {
     const { session, response } = await Auth.requireAuth(request)
@@ -158,11 +158,5 @@ export class Auth {
     }
 
     return { session }
-  }
-}
-
-// Helper function for server components
-// biome-ignore lint/suspicious/useAwait: 구현 필요
-export async function getServerSession(): Promise<Session | null> {
-  return Auth.getSession()
+  },
 }
