@@ -14,10 +14,10 @@ const updatePostSchema = z.object({
 // GET /api/posts/[id] - Get single post
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  ctx: RouteContext<'/api/posts/[id]'>,
 ) {
   try {
-    const { id } = await params
+    const { id } = await ctx.params
 
     const post = await db
       .select({

@@ -1,86 +1,65 @@
-'use client'
-
-import { Alert, AlertDescription } from '@workspace/ui/components/alert'
-import { Card, CardContent } from '@workspace/ui/components/card'
-import { useQueryComments } from '@/app/_hooks/use-query-comments'
-import { useQueryPost } from '@/app/_hooks/use-query-post'
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from '@tanstack/react-query'
+import { Card, CardContent, CardHeader } from '@workspace/ui/components/card'
+import CommentList from '@/app/posts/[id]/comment-list'
+import PostItemController from '@/app/posts/[id]/post-item-controller'
+import type { Post } from '@/schemas/posts'
 import 'highlight.js/styles/github.css'
-import { useParams } from 'next/navigation'
-import { CommentItem } from './comment-item'
+import { notFound } from 'next/navigation'
+import ReactMarkdown from 'react-markdown'
+import rehypeHighlight from 'rehype-highlight'
+import remarkGfm from 'remark-gfm'
 import { CommentSubmitForm } from './comment-submit-form'
-import { PostItem } from './post-item'
 
-export default function PostPage() {
-  const params = useParams()
-  const postId = params.id as string
-
-  // React Query hooks
-  const {
-    data: post,
-    isLoading: postLoading,
-    error: postError,
-  } = useQueryPost(postId)
-  const {
-    data: comments = [],
-    isLoading: commentsLoading,
-    error: commentsError,
-  } = useQueryComments(postId)
-
-  const loading = postLoading || commentsLoading
-  const error = postError || commentsError
-
-  if (loading) {
-    return (
-      <div className="container mx-auto max-w-4xl px-4 py-8">
-        <div>Loading...</div>
-      </div>
-    )
-  }
+export default async function PostPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id: postId } = await params
+  const queryClient = new QueryClient()
+  const post = await queryClient.fetchQuery({
+    queryKey: ['post', postId],
+    queryFn: async (): Promise<Post | null> => {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/posts/${postId}`,
+      )
+      if (!response.ok) {
+        return null
+      }
+      const result = await response.json()
+      return result
+    },
+  })
 
   if (!post) {
-    return (
-      <div className="container mx-auto max-w-4xl px-4 py-8">
-        <div>Post not found</div>
-      </div>
-    )
+    notFound()
   }
 
-  const topLevelComments = comments.filter((c) => !c.parentId)
-
   return (
-    <div className="container mx-auto max-w-4xl px-4 py-8">
-      {error && (
-        <Alert variant="destructive" className="mb-6">
-          <AlertDescription>
-            {error instanceof Error ? error.message : 'An error occurred'}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Post */}
-      <PostItem postId={post.id} />
-
-      {/* Comment Form */}
-      <CommentSubmitForm postId={post.id} />
-
-      {/* Comments */}
-      <div className="space-y-0">
-        <h2 className="mb-6 font-bold text-xl">
-          Comments ({topLevelComments.length})
-        </h2>
-
-        {topLevelComments.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6 text-center text-gray-600">
-              No comments yet. Be the first to comment!
-            </CardContent>
-          </Card>
-        ) : (
-          topLevelComments.map((comment) => (
-            <CommentItem key={comment.id} comment={comment} postId={post.id} />
-          ))
-        )}
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <div className="container mx-auto max-w-4xl px-4 py-8">
+        <Card className="mb-8">
+          <CardHeader>
+            <PostItemController postId={postId} />
+          </CardHeader>
+          <CardContent>
+            <div className="dark:prose-invert prose max-w-none">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeHighlight]}
+              >
+                {post.content}
+              </ReactMarkdown>
+            </div>
+          </CardContent>
+        </Card>
+        <CommentSubmitForm postId={postId} />
+        <CommentList postId={postId} />
       </div>
-    </div>
+    </HydrationBoundary>
   )
 }

@@ -36,6 +36,7 @@ WORKDIR /app
 COPY --from=deps /app ./
 ENV TURBO_TELEMETRY_DISABLE=1
 ENV DO_NOT_TRACK=1
+ENV NEXT_PUBLIC_API_BASE_URL=https://a-ha-dev.com
 # 앱을 빌드
 RUN pnpm build --filter=./apps/web
 
